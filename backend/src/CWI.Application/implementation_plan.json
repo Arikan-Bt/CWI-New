@@ -1,0 +1,24 @@
+{
+  "title": "Backend Performans Optimizasyonu",
+  "description": "API performansını artırmak için Response Compression, Database Indexing ve Query Projection (Select) tekniklerinin uygulanması.",
+  "steps": [
+    {
+      "step": 1,
+      "description": "Program.cs dosyasına Response Compression (Gzip) middleware entegrasyonu.",
+      "file": "c:/New Project/CWI/backend/src/CWI.API/Program.cs",
+      "action": "Ekleme"
+    },
+    {
+      "step": 2,
+      "description": "OrderConfiguration.cs dosyasına CustomerId ve CreatedByGroupCode alanları için veritabanı indekslerinin eklenmesi.",
+      "file": "c:/New Project/CWI/backend/src/CWI.Infrastructure/Persistence/Configurations/OrderConfiguration.cs",
+      "action": "Güncelleme"
+    },
+    {
+      "step": 3,
+      "description": "GetOrdersReportQuery.cs dosyasındaki sorgunun .Include() yerine .Select() projection yöntemi ve .AsSplitQuery() ile optimize edilmesi.",
+      "file": "c:/New Project/CWI/backend/src/CWI.Application/Features/Reports/Queries/GetOrdersReportQuery.cs",
+      "action": "Refactoring"
+    }
+  ]
+}

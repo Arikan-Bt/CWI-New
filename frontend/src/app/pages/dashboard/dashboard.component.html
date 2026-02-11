@@ -1,0 +1,33 @@
+<div class="card p-6 min-h-screen transition-all duration-300">
+  <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 mb-2">Dashboard</h1>
+    </div>
+  </div>
+
+  @if (dashboard(); as data) {
+  <div class="grid grid-cols-12 gap-6">
+    @for (widget of data.widgets; track widget.id) {
+    <div [class]="'col-span-12 md:col-span-6 xl:col-span-' + widget.width">
+      @switch (widget.type) { @case ('StatCard') {
+      <app-stat-widget [widget]="widget" class="h-full block"></app-stat-widget>
+      } @case ('Chart') {
+      <app-chart-widget [widget]="widget" class="h-full block"></app-chart-widget>
+      } @case ('Table') {
+      <app-table-widget [widget]="widget" class="h-full block"></app-table-widget>
+      } @case ('Banner') {
+      <app-banner-widget [widget]="widget" class="h-full block"></app-banner-widget>
+      } }
+    </div>
+    }
+  </div>
+  } @else {
+  <div class="grid grid-cols-12 gap-6 animate-pulse">
+    <div class="col-span-12 md:col-span-3 h-32 bg-surface-100 dark:bg-surface-800 rounded-xl"></div>
+    <div class="col-span-12 md:col-span-3 h-32 bg-surface-100 dark:bg-surface-800 rounded-xl"></div>
+    <div class="col-span-12 md:col-span-3 h-32 bg-surface-100 dark:bg-surface-800 rounded-xl"></div>
+    <div class="col-span-12 md:col-span-3 h-32 bg-surface-100 dark:bg-surface-800 rounded-xl"></div>
+    <div class="col-span-12 h-96 bg-surface-100 dark:bg-surface-800 rounded-xl"></div>
+  </div>
+  }
+</div>

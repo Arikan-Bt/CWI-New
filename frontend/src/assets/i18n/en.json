@@ -1,0 +1,79 @@
+{
+    "LOGIN": {
+        "WELCOME": "Vendor Login",
+        "SIGN_IN_CONTINUE": "Sign in to continue",
+        "EMAIL": "User Code",
+        "EMAIL_PLACEHOLDER": "User code",
+        "PASSWORD": "Password",
+        "PASSWORD_PLACEHOLDER": "Password",
+        "REMEMBER_ME": "Remember Me",
+        "FORGOT_PASSWORD": "Forgot Password",
+        "SIGN_IN": "Login"
+    },
+    "COMMON": {
+        "SAVE": "Save",
+        "CANCEL": "Cancel",
+        "DELETE": "Delete",
+        "EDIT": "Edit",
+        "SUCCESS": "Operation Successful",
+        "ERROR": "An Error Occurred",
+        "APPROVE": "Approve",
+        "REJECT": "Reject",
+        "SEARCH": "Search",
+        "FILTER": "Filter",
+        "CLEAR": "Clear",
+        "DOWNLOAD": "Download",
+        "UPLOAD": "Upload",
+        "ACTIONS": "Actions",
+        "STATUS": "Status"
+    },
+    "MENU": {
+        "DASHBOARD": "Dashboard",
+        "ORDERS": "Orders",
+        "PAYMENTS": "Payment Notifications",
+        "REPORTS": "Reports",
+        "IMPORT": "Import Operations",
+        "SETTINGS": "Settings",
+        "LOGOUT": "Logout"
+    },
+    "PAYMENT": {
+        "TITLE": "Payment Notifications",
+        "NEW_PAYMENT": "New Notification",
+        "PAYMENT_NO": "Notification No",
+        "DATE": "Date",
+        "AMOUNT": "Amount",
+        "CURRENCY": "Currency",
+        "TYPE": "Payment Type",
+        "STATUS": "Status",
+        "DESCRIPTION": "Description",
+        "RECEIPT": "Receipt",
+        "BANK_TRANSFER": "Bank Transfer",
+        "CHECK": "Check",
+        "CASH": "Cash",
+        "CREDIT_CARD": "Credit Card",
+        "PENDING": "Pending",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected"
+    },
+    "IMPORT": {
+        "TITLE": "Excel Order Import",
+        "SELECT_FILE": "Select File",
+        "DOWNLOAD_TEMPLATE": "Download Template",
+        "VALIDATE": "Validate",
+        "IMPORT": "Create Orders",
+        "VALIDATION_SUCCESS": "File validation successful",
+        "VALIDATION_ERROR": "File contains errors",
+        "ROW": "Row",
+        "ERROR": "Error"
+    },
+    "REPORT": {
+        "ORDERS": "Order Report",
+        "CUSTOMER_BALANCE": "Customer Balance Report",
+        "STOCK": "Stock Report",
+        "START_DATE": "Start Date",
+        "END_DATE": "End Date",
+        "TOTAL_AMOUNT": "Total Amount",
+        "TOTAL_QUANTITY": "Total Quantity",
+        "EXPORT_EXCEL": "Export to Excel"
+    }
+}

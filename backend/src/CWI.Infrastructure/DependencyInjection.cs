@@ -1,0 +1,51 @@
+using CWI.Application.Interfaces.Repositories;
+using CWI.Infrastructure.Persistence;
+using CWI.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace CWI.Infrastructure;
+
+/// <summary>
+/// Infrastructure katmanı için Dependency Injection kayıtları
+/// </summary>
+public static class DependencyInjection
+{
+    /// <summary>
+    /// Infrastructure servislerini kaydeder
+    /// </summary>
+    /// <param name="services">Service collection</param>
+    /// <param name="configuration">Configuration</param>
+    /// <returns>Service collection</returns>
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    {
+        // DbContext kaydı
+        services.AddDbContext<CWIDbContext>(options =>
+        {
+            options.UseSqlServer(
+                configuration.GetConnectionString("DefaultConnection"),
+                sqlOptions =>
+                {
+                    sqlOptions.MigrationsAssembly(typeof(CWIDbContext).Assembly.FullName);
+                    sqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 3,
+                        maxRetryDelay: TimeSpan.FromSeconds(30),
+                        errorNumbersToAdd: null);
+                    // Karmaşık raporlama sorguları için timeout süresini artır
+                    sqlOptions.CommandTimeout(120);
+                });
+        });
+        
+        // Repository ve UnitOfWork kayıtları
+        services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+        services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        
+        // Auth servisleri
+        services.AddScoped<Application.Interfaces.Services.IAuthService, Auth.AuthService>();
+        services.AddScoped<Application.Interfaces.Services.ICurrentUserService, Services.CurrentUserService>();
+        
+        return services;
+    }
+}
