@@ -84,3 +84,5 @@ bazel-out/
 /e2e/*.map
 open_browser_url
 .angular/
+.claude/
+temp/
