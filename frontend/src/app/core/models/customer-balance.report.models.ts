@@ -40,3 +40,23 @@ export interface CustomerReferenceDto {
 export interface CustomerReferencesResponse {
   data: CustomerReferenceDto[];
 }
+
+export interface CancelledInvoiceOption {
+  orderId: number;
+  invoiceNo: string;
+  canceledDate: Date | string;
+  paidAmount: number;
+}
+
+export interface CancelledInvoicesResponse {
+  data: CancelledInvoiceOption[];
+}
+
+export interface CreateDebitNoteRequest {
+  customerCode: string;
+  orderId: number;
+  invoiceNo: string;
+  amount: number;
+  debitNoteDate: Date;
+  notes?: string;
+}

@@ -30,6 +30,8 @@ import { PaymentService } from '../../../core/services/payment.service';
 import {
   CustomerBalanceReportItem,
   CustomerReferenceDto,
+  CancelledInvoiceOption,
+  CreateDebitNoteRequest,
 } from '../../../core/models/customer-balance.report.models';
 import { finalize } from 'rxjs';
 
@@ -39,6 +41,15 @@ interface PaymentForm {
   referenceCode: string | null;
   amount: number | null;
   receiptNumber: string;
+  date: Date;
+  notes: string;
+}
+
+interface DebitNoteForm {
+  customerCode: string | null;
+  orderId: number | null;
+  invoiceNo: string | null;
+  amount: number | null;
   date: Date;
   notes: string;
 }
@@ -110,6 +121,12 @@ interface PaymentForm {
 
               <!-- Action Buttons -->
               <div class="flex justify-end gap-2">
+                <p-button
+                  label="Debit Note"
+                  icon="pi pi-file-edit"
+                  severity="warn"
+                  (onClick)="openDebitNoteDialog()"
+                ></p-button>
                 <p-button
                   label="Add Payment"
                   icon="pi pi-plus"
@@ -204,8 +221,9 @@ interface PaymentForm {
                 <td
                   class="text-right font-bold"
                   [ngClass]="{
+                    'text-amber-400': item.orderStatus === 'DebitNote',
                     'text-red-500': item.balance < 0,
-                    'text-green-500': item.balance > 0,
+                    'text-green-500': item.balance > 0 && item.orderStatus !== 'DebitNote',
                   }"
                 >
                   {{ item.balance | currency: 'USD' : 'symbol' : '1.2-2' }}
@@ -399,6 +417,107 @@ interface PaymentForm {
           ></p-button>
         </ng-template>
       </p-dialog>
+
+      <!-- Debit Note Modal -->
+      <p-dialog
+        [(visible)]="isDebitNoteDialogVisible"
+        [modal]="true"
+        header="Debit Note"
+        [style]="{ width: '70%', 'max-width': '900px' }"
+        styleClass="p-fluid"
+        [appendTo]="'body'"
+      >
+        <p class="text-muted-color mb-4">
+          Please select cancelled invoice and enter debit note amount.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="md:col-span-2 flex flex-col gap-2">
+            <label for="debit-customer" class="font-medium">Customer Account</label>
+            <p-select
+              id="debit-customer"
+              [options]="customerOptions()"
+              [(ngModel)]="debitNoteForm().customerCode"
+              (ngModelChange)="onDebitNoteCustomerChange($event)"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select a customer account"
+              [filter]="true"
+              filterBy="label"
+              appendTo="body"
+            ></p-select>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label for="debit-invoice" class="font-medium">Invoice No</label>
+            <p-select
+              id="debit-invoice"
+              [options]="debitNoteInvoiceOptions()"
+              [(ngModel)]="debitNoteForm().orderId"
+              (ngModelChange)="onDebitNoteInvoiceChange($event)"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select an invoice"
+              appendTo="body"
+              [loading]="loadingCancelledInvoices()"
+              [disabled]="!debitNoteForm().customerCode"
+            ></p-select>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label for="debit-amount" class="font-medium">Debit Note Amount</label>
+            <p-inputnumber
+              id="debit-amount"
+              [(ngModel)]="debitNoteForm().amount"
+              mode="currency"
+              currency="USD"
+              locale="en-US"
+              placeholder="0.00"
+            ></p-inputnumber>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label for="debit-date" class="font-medium">Debit Note Date</label>
+            <p-datepicker
+              id="debit-date"
+              [(ngModel)]="debitNoteForm().date"
+              [showIcon]="true"
+              dateFormat="dd.mm.yy"
+              placeholder="Select date"
+              appendTo="body"
+              [fluid]="true"
+            ></p-datepicker>
+          </div>
+
+          <div class="md:col-span-2 flex flex-col gap-2">
+            <label for="debit-notes" class="font-medium">Notes / Description</label>
+            <textarea
+              id="debit-notes"
+              pTextarea
+              [(ngModel)]="debitNoteForm().notes"
+              rows="3"
+              placeholder="Enter any additional information..."
+            ></textarea>
+          </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+          <p-button
+            label="Cancel"
+            [text]="true"
+            severity="secondary"
+            (onClick)="isDebitNoteDialogVisible.set(false)"
+          ></p-button>
+          <p-button
+            label="Create Debit Note"
+            icon="pi pi-file-excel"
+            severity="warn"
+            (onClick)="submitDebitNote()"
+            [loading]="debitNoteLoading()"
+            [disabled]="debitNoteLoading()"
+          ></p-button>
+        </ng-template>
+      </p-dialog>
     </div>
   `,
   styles: [
@@ -453,6 +572,10 @@ export class CustomerBalance implements OnInit {
   customerOptions = signal<{ label: string; value: string }[]>([]);
   customerReferences = signal<CustomerReferenceDto[]>([]);
   loadingReferences = signal(false);
+  isDebitNoteDialogVisible = signal(false);
+  debitNoteLoading = signal(false);
+  loadingCancelledInvoices = signal(false);
+  cancelledInvoiceOptions = signal<CancelledInvoiceOption[]>([]);
   allowedExtensions = signal(['.pdf', '.jpg', '.jpeg', '.png']);
   acceptStr = computed(() => this.allowedExtensions().join(','));
 
@@ -467,6 +590,32 @@ export class CustomerBalance implements OnInit {
 
   // Dinamik referans listesi - müşteri seçildiğinde yüklenir
   referenceOptions = signal<{ label: string; value: string; balance?: number }[]>([]);
+  debitNoteInvoiceOptions = computed(() =>
+    this.cancelledInvoiceOptions().map((item) => ({
+      label: `${item.invoiceNo} - Paid: $${item.paidAmount.toFixed(2)}`,
+      value: item.orderId,
+    })),
+  );
+  debitNoteForm = signal<DebitNoteForm>({
+    customerCode: null,
+    orderId: null,
+    invoiceNo: null,
+    amount: null,
+    date: new Date(),
+    notes: '',
+  });
+  canSubmitDebitNote = computed(() => {
+    const form = this.debitNoteForm();
+    const normalizedOrderId = Number(form.orderId ?? 0);
+    const customerCode = (form.customerCode ?? '').trim();
+    const selectedOption = this.cancelledInvoiceOptions().find(
+      (x) => Number(x.orderId) === normalizedOrderId,
+    );
+    const invoiceNo = (form.invoiceNo ?? selectedOption?.invoiceNo ?? '').trim();
+    const amount = Number(form.amount ?? 0);
+
+    return !!form.customerCode && normalizedOrderId > 0 && invoiceNo.length > 0 && amount > 0;
+  });
 
   ngOnInit() {
     // Sayfa açıldığında müşteri listesini yükle
@@ -505,6 +654,63 @@ export class CustomerBalance implements OnInit {
     this.selectedFile = null;
     this.referenceOptions.set([]);
     this.isPaymentDialogVisible.set(true);
+  }
+
+  openDebitNoteDialog() {
+    this.debitNoteForm.set({
+      customerCode: null,
+      orderId: null,
+      invoiceNo: null,
+      amount: null,
+      date: new Date(),
+      notes: '',
+    });
+    this.cancelledInvoiceOptions.set([]);
+    this.isDebitNoteDialogVisible.set(true);
+  }
+
+  onDebitNoteCustomerChange(customerCode: string | null) {
+    this.debitNoteForm.update((f) => ({
+      ...f,
+      customerCode,
+      orderId: null,
+      invoiceNo: null,
+    }));
+    this.cancelledInvoiceOptions.set([]);
+
+    if (!customerCode) {
+      return;
+    }
+
+    this.loadingCancelledInvoices.set(true);
+    this.reportService.getCustomerCancelledInvoices(customerCode).subscribe({
+      next: (res) => {
+        this.loadingCancelledInvoices.set(false);
+        const options = res.success && res.data?.data ? res.data.data : [];
+        this.cancelledInvoiceOptions.set(options);
+      },
+      error: (err) => {
+        this.loadingCancelledInvoices.set(false);
+        console.error('Cancel invoice listesi yuklenirken hata:', err);
+      },
+    });
+  }
+
+  onDebitNoteInvoiceChange(orderId: number | string | null) {
+    const normalizedOrderId = Number(orderId ?? 0);
+    if (!normalizedOrderId || Number.isNaN(normalizedOrderId)) {
+      this.debitNoteForm.update((f) => ({ ...f, orderId: null, invoiceNo: null }));
+      return;
+    }
+
+    const selectedOption = this.cancelledInvoiceOptions().find(
+      (x) => Number(x.orderId) === normalizedOrderId,
+    );
+    this.debitNoteForm.update((f) => ({
+      ...f,
+      orderId: normalizedOrderId,
+      invoiceNo: selectedOption?.invoiceNo?.trim() || null,
+    }));
   }
 
   /**
@@ -621,6 +827,80 @@ export class CustomerBalance implements OnInit {
         });
       },
     });
+  }
+
+  submitDebitNote() {
+    const form = this.debitNoteForm();
+    const normalizedOrderId = Number(form.orderId ?? 0);
+    const customerCode = (form.customerCode ?? '').trim();
+    const selectedOption = this.cancelledInvoiceOptions().find(
+      (x) => Number(x.orderId) === normalizedOrderId,
+    );
+    const normalizedInvoiceNo = (form.invoiceNo ?? selectedOption?.invoiceNo ?? '').trim();
+    const amount = Number(form.amount ?? 0);
+    const missingFields: string[] = [];
+    if (!customerCode) missingFields.push('Customer');
+    if (normalizedOrderId <= 0 || !normalizedInvoiceNo) missingFields.push('Invoice');
+    if (!(amount > 0)) missingFields.push('Amount');
+
+    if (missingFields.length > 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Warning',
+        detail: `Please fill in the required fields: ${missingFields.join(', ')}.`,
+      });
+      return;
+    }
+
+    const request: CreateDebitNoteRequest = {
+      customerCode,
+      orderId: normalizedOrderId,
+      invoiceNo: normalizedInvoiceNo,
+      amount,
+      debitNoteDate: form.date,
+      notes: form.notes || undefined,
+    };
+
+    this.debitNoteLoading.set(true);
+    this.reportService
+      .createDebitNoteAndExport(request)
+      .pipe(finalize(() => this.debitNoteLoading.set(false)))
+      .subscribe({
+        next: (blob) => {
+          const downloadName = `Debit_Note_${normalizedInvoiceNo}_${new Date()
+            .toISOString()
+            .slice(0, 16)
+            .replace(/[-:T]/g, '')}.xlsx`;
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = downloadName;
+          link.click();
+          window.URL.revokeObjectURL(url);
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: 'Debit note generated successfully.',
+          });
+          this.isDebitNoteDialogVisible.set(false);
+          this.loadData();
+        },
+        error: (err) => {
+          const serverMessage =
+            err?.error?.error ||
+            err?.error?.message ||
+            err?.error?.title ||
+            err?.message ||
+            'An error occurred while creating debit note.';
+
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: serverMessage,
+          });
+        },
+      });
   }
 
   onGlobalFilter(table: any, event: Event) {

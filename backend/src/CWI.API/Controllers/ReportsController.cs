@@ -161,6 +161,36 @@ public class ReportsController : ControllerBase
         return Ok(Result<CustomerReferencesResponse>.Succeed(result));
     }
 
+    /// <summary>
+    /// Seçilen müşteriye ait cancel edilmiş ve ödeme alınmış invoice listesini getirir.
+    /// </summary>
+    /// <param name="customerCode">Müşteri kodu</param>
+    /// <returns>Debit Note için kullanılacak invoice seçenekleri</returns>
+    [HttpGet("customer-cancelled-invoices/{customerCode}")]
+    public async Task<ActionResult<Result<CancelledInvoicesResponse>>> GetCustomerCancelledInvoices(string customerCode)
+    {
+        var result = await _mediator.Send(new GetCustomerCancelledInvoicesQuery { CustomerCode = customerCode });
+        return Ok(Result<CancelledInvoicesResponse>.Succeed(result));
+    }
+
+    /// <summary>
+    /// Debit note kaydı oluşturur ve excel çıktısı döner.
+    /// </summary>
+    /// <param name="request">Debit note oluşturma isteği</param>
+    /// <returns>Debit note excel dosyası</returns>
+    [HttpPost("debit-note/export")]
+    public async Task<IActionResult> ExportDebitNote([FromBody] CreateDebitNoteExportRequest request)
+    {
+        var fileContent = await _mediator.Send(new CreateDebitNoteAndExportCommand { Request = request });
+        if (fileContent == null || fileContent.Length == 0) return BadRequest(Result<string>.Failure("Debit note oluşturulamadı."));
+
+        var safeInvoiceNo = string.IsNullOrWhiteSpace(request.InvoiceNo) ? "Unknown" : request.InvoiceNo.Trim();
+        return File(
+            fileContent,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            $"Debit_Note_{safeInvoiceNo}_{DateTime.Now:yyyyMMddHHmm}.xlsx");
+    }
+
     [HttpPost("item-order-check")]
     public async Task<ActionResult<Result<ItemOrderCheckResponse>>> GetItemOrderCheck([FromBody] ItemOrderCheckRequest request)
     {

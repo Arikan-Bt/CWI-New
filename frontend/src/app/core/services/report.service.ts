@@ -34,6 +34,8 @@ import {
   CustomerBalanceReportResponse,
   CustomerReferenceDto,
   CustomerReferencesResponse,
+  CancelledInvoicesResponse,
+  CreateDebitNoteRequest,
 } from '../models/customer-balance.report.models';
 import {
   CustomerPaymentDetailReportRequest,
@@ -169,6 +171,20 @@ export class ReportService {
     return this.http.get<Result<CustomerReferencesResponse>>(
       `${this.apiUrl}/customer-references/${customerCode}`,
     );
+  }
+
+  getCustomerCancelledInvoices(
+    customerCode: string,
+  ): Observable<Result<CancelledInvoicesResponse>> {
+    return this.http.get<Result<CancelledInvoicesResponse>>(
+      `${this.apiUrl}/customer-cancelled-invoices/${customerCode}`,
+    );
+  }
+
+  createDebitNoteAndExport(request: CreateDebitNoteRequest): Observable<Blob> {
+    return this.http.post(`${this.apiUrl}/debit-note/export`, request, {
+      responseType: 'blob',
+    });
   }
 
   getProducts(): Observable<Result<{ label: string; value: string }[]>> {
