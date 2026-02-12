@@ -78,19 +78,6 @@ import { PurchasingService } from '../../../core/services/purchasing.service';
                 ></p-select>
               </div>
 
-              <!-- Currency Selection -->
-              <div class="flex flex-col gap-2">
-                <label for="currency" class="font-medium">Currency</label>
-                <p-select
-                  id="currency"
-                  [options]="currencyOptions"
-                  [(ngModel)]="paymentForm().currency"
-                  optionLabel="label"
-                  optionValue="value"
-                  placeholder="Select"
-                ></p-select>
-              </div>
-
               <!-- Payment Amount -->
               <div class="flex flex-col gap-2">
                 <label for="amount" class="font-medium">Payment Amount</label>
@@ -98,7 +85,7 @@ import { PurchasingService } from '../../../core/services/purchasing.service';
                   id="amount"
                   [(ngModel)]="paymentForm().amount"
                   mode="currency"
-                  [currency]="paymentForm().currency || 'USD'"
+                  currency="USD"
                   locale="en-US"
                   placeholder="0.00"
                 ></p-inputnumber>
@@ -119,7 +106,7 @@ import { PurchasingService } from '../../../core/services/purchasing.service';
               </div>
 
               <!-- Date -->
-              <div class="md:col-span-2 flex flex-col gap-2">
+              <div class="flex flex-col gap-2">
                 <label for="date" class="font-medium">Transaction Date</label>
                 <p-datepicker
                   id="date"
@@ -224,7 +211,6 @@ export class PaymentsMade implements OnInit {
   paymentForm = signal({
     vendorCode: null as string | null,
     referenceCode: null as string | null,
-    currency: 'USD',
     amount: null as number | null,
     receiptNumber: '',
     date: new Date(),
@@ -236,12 +222,6 @@ export class PaymentsMade implements OnInit {
     { label: 'Bank Transfer (EFT/Wire)', value: 'EFT' },
     { label: 'Credit Card', value: 'CC' },
     { label: 'Check / Bill', value: 'CHECK' },
-  ];
-
-  currencyOptions = [
-    { label: 'TRY', value: 'TRY' },
-    { label: 'USD', value: 'USD' },
-    { label: 'EUR', value: 'EUR' },
   ];
 
   ngOnInit() {
@@ -281,7 +261,7 @@ export class PaymentsMade implements OnInit {
     const formData = new FormData();
     formData.append('VendorCode', form.vendorCode);
     formData.append('Amount', form.amount.toString());
-    formData.append('CurrencyCode', form.currency);
+    formData.append('CurrencyCode', 'USD');
     formData.append('PaymentDate', form.date.toISOString());
     if (form.referenceCode) formData.append('ReferenceNumber', form.referenceCode);
     if (form.receiptNumber) formData.append('Description', form.receiptNumber); // Using receiptNumber as description for now or could be separate
@@ -303,7 +283,6 @@ export class PaymentsMade implements OnInit {
           this.paymentForm.set({
             vendorCode: null,
             referenceCode: null,
-            currency: 'USD',
             amount: null,
             receiptNumber: '',
             date: new Date(),

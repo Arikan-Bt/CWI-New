@@ -21,7 +21,6 @@ import { AuthService } from '../../../core/services/auth.service';
 interface PaymentForm {
   customerCode: string | null;
   referenceCode: string | null;
-  currency: string;
   amount: number | null;
   receiptNumber: string;
   date: Date;
@@ -95,19 +94,6 @@ interface PaymentForm {
                 ></p-select>
               </div>
 
-              <!-- Currency Selection -->
-              <div class="flex flex-col gap-2">
-                <label for="currency" class="font-medium">Currency</label>
-                <p-select
-                  id="currency"
-                  [options]="currencyOptions"
-                  [(ngModel)]="paymentForm().currency"
-                  optionLabel="label"
-                  optionValue="value"
-                  placeholder="Select"
-                ></p-select>
-              </div>
-
               <!-- Payment Amount -->
               <div class="flex flex-col gap-2">
                 <label for="amount" class="font-medium">Payment Amount</label>
@@ -115,7 +101,7 @@ interface PaymentForm {
                   id="amount"
                   [(ngModel)]="paymentForm().amount"
                   mode="currency"
-                  [currency]="paymentForm().currency || 'USD'"
+                  currency="USD"
                   locale="en-US"
                   placeholder="0.00"
                 ></p-inputnumber>
@@ -136,7 +122,7 @@ interface PaymentForm {
               </div>
 
               <!-- Date -->
-              <div class="md:col-span-2 flex flex-col gap-2">
+              <div class="flex flex-col gap-2">
                 <label for="date" class="font-medium">Transaction Date</label>
                 <p-datepicker
                   id="date"
@@ -258,7 +244,6 @@ export class PaymentReceived {
   paymentForm = signal<PaymentForm>({
     customerCode: null,
     referenceCode: null,
-    currency: 'USD',
     amount: null,
     receiptNumber: '',
     date: new Date(),
@@ -271,12 +256,6 @@ export class PaymentReceived {
     { label: 'Bank Transfer (EFT/Wire)', value: 'EFT' },
     { label: 'Credit Card (Online)', value: 'CC' },
     { label: 'Check / Bill', value: 'CHECK' },
-  ];
-
-  currencyOptions = [
-    { label: 'TRY', value: 'TRY' },
-    { label: 'USD', value: 'USD' },
-    { label: 'EUR', value: 'EUR' },
   ];
 
   constructor() {
@@ -332,7 +311,7 @@ export class PaymentReceived {
     const formData = new FormData();
     formData.append('CustomerCode', form.customerCode);
     formData.append('PaymentMethodCode', form.referenceCode || '');
-    formData.append('CurrencyCode', form.currency);
+    formData.append('CurrencyCode', 'USD');
     formData.append('Amount', (form.amount || 0).toString());
     formData.append('ReceiptNumber', form.receiptNumber);
     formData.append('PaymentDate', form.date.toISOString());
@@ -377,7 +356,6 @@ export class PaymentReceived {
       ...prev,
       customerCode: this.isCustomerFixed() ? prev.customerCode : null,
       referenceCode: null,
-      currency: 'USD',
       amount: null,
       receiptNumber: '',
       date: new Date(),

@@ -37,8 +37,12 @@ public class CreateVendorInvoiceCommandHandler : IRequestHandler<CreateVendorInv
             }
 
             // 1. Para birimini bul
+            var normalizedCurrencyCode = string.IsNullOrWhiteSpace(request.CurrencyCode)
+                ? "USD"
+                : request.CurrencyCode.Trim().ToUpperInvariant();
+
             var currency = await _unitOfWork.Repository<Currency, int>()
-                .FirstOrDefaultAsync(x => x.Code == request.CurrencyCode, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Code == normalizedCurrencyCode, cancellationToken);
             
             if (currency == null)
             {

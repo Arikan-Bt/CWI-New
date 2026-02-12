@@ -143,6 +143,9 @@ public class CreateStockAdjustmentCommandHandler : IRequestHandler<CreateStockAd
                 var oldOnHand = inventoryItem?.QuantityOnHand ?? 0;
                 var oldReserved = inventoryItem?.QuantityReserved ?? 0;
                 var newOnHand = item.Quantity;
+                var normalizedCurrency = string.IsNullOrWhiteSpace(item.Currency)
+                    ? "USD"
+                    : item.Currency.Trim().ToUpperInvariant();
 
                 var adjustmentItem = new StockAdjustmentItem
                 {
@@ -151,7 +154,7 @@ public class CreateStockAdjustmentCommandHandler : IRequestHandler<CreateStockAd
                     OldQuantity = oldOnHand,
                     NewQuantity = newOnHand,
                     Price = item.Price,
-                    Currency = item.Currency,
+                    Currency = normalizedCurrency,
                     ShelfNumber = item.ShelfNumber,
                     PackList = item.PackList,
                     ReceivingNumber = item.ReceivingNo,

@@ -159,7 +159,7 @@ public class GetVendorBalanceReportQuery : IRequest<VendorBalanceReportResponse>
                     CurrAccDescription = i.Vendor?.Name ?? string.Empty,
                     InvoiceNo = i.InvoiceNumber,
                     InvoiceDate = i.InvoicedAt,
-                    Currency = i.Currency?.Code ?? string.Empty,
+                    Currency = i.Currency?.Code ?? "USD",
                     Description = i.Description ?? string.Empty,
                     TotalAmount = i.TotalAmount,
                     PaymentTotal = paymentTotal,
@@ -170,7 +170,7 @@ public class GetVendorBalanceReportQuery : IRequest<VendorBalanceReportResponse>
                     {
                         Id = (int)p.Id,
                         Amount = p.Amount,
-                        Currency = p.Currency?.Code ?? string.Empty,
+                        Currency = p.Currency?.Code ?? "USD",
                         PaidAt = p.PaidAt,
                         Description = p.Description ?? string.Empty,
                         FilePath = p.FilePath,

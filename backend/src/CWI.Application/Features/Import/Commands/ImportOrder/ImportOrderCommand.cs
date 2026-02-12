@@ -515,7 +515,6 @@ public class ImportOrderCommandHandler : IRequestHandler<ImportOrderCommand, Imp
 
         var currency = await currencyRepo.FirstOrDefaultAsync(x => x.IsDefault, cancellationToken)
             ?? await currencyRepo.FirstOrDefaultAsync(x => x.Code == "USD", cancellationToken)
-            ?? await currencyRepo.FirstOrDefaultAsync(x => x.Code == "TRY", cancellationToken)
             ?? await currencyRepo.FirstOrDefaultAsync(x => x.IsActive, cancellationToken)
             ?? await currencyRepo.AsQueryable().FirstOrDefaultAsync(cancellationToken);
 

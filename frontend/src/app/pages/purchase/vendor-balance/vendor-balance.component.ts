@@ -331,19 +331,6 @@ export interface PaymentHistoryItem {
                 </p-iconfield>
               </div>
 
-              <!-- Currency Selection -->
-              <div class="flex flex-col gap-2">
-                <label for="currency" class="font-medium text-surface-600">Currency</label>
-                <p-select
-                  id="currency"
-                  [options]="currencyOptions"
-                  [(ngModel)]="paymentForm().currency"
-                  optionLabel="label"
-                  optionValue="value"
-                  appendTo="body"
-                ></p-select>
-              </div>
-
               <!-- Payment Amount -->
               <div class="flex flex-col gap-2">
                 <label for="amount" class="font-medium text-surface-600">Payment Amount</label>
@@ -351,7 +338,7 @@ export interface PaymentHistoryItem {
                   id="amount"
                   [(ngModel)]="paymentForm().amount"
                   mode="currency"
-                  [currency]="paymentForm().currency || 'USD'"
+                  currency="USD"
                   locale="en-US"
                 ></p-inputnumber>
               </div>
@@ -372,7 +359,7 @@ export interface PaymentHistoryItem {
               </div>
 
               <!-- Date -->
-              <div class="md:col-span-2 flex flex-col gap-2">
+              <div class="flex flex-col gap-2">
                 <label for="date" class="font-medium text-surface-600">Transaction Date</label>
                 <p-datepicker
                   [(ngModel)]="paymentForm().date"
@@ -504,17 +491,10 @@ export class VendorBalance implements OnInit {
   paymentForm = signal({
     vendorCode: '',
     referenceCode: '',
-    currency: 'USD',
     amount: null as number | null,
     receiptNumber: '',
     date: new Date(),
   });
-
-  currencyOptions = [
-    { label: 'TRY', value: 'TRY' },
-    { label: 'USD', value: 'USD' },
-    { label: 'EUR', value: 'EUR' },
-  ];
 
   ngOnInit() {
     // Sayfa açıldığında otomatik yükleme yapılmıyor.
@@ -620,7 +600,6 @@ export class VendorBalance implements OnInit {
     this.paymentForm.set({
       vendorCode: item.currAccCode,
       referenceCode: item.invoiceNo,
-      currency: item.currency || 'USD',
       amount: null,
       receiptNumber: '',
       date: new Date(),
@@ -662,7 +641,7 @@ export class VendorBalance implements OnInit {
     const formData = new FormData();
     formData.append('VendorCode', item.currAccCode);
     formData.append('Amount', form.amount.toString());
-    formData.append('CurrencyCode', form.currency);
+    formData.append('CurrencyCode', 'USD');
     formData.append('ReferenceNumber', item.invoiceNo);
     formData.append('Description', form.receiptNumber || `Payment for Invoice: ${item.invoiceNo}`);
     formData.append('PaymentDate', form.date.toISOString());
@@ -701,7 +680,7 @@ export class VendorBalance implements OnInit {
                       id: 0, // Geçici ID
                       date: form.date,
                       amount: newAmount,
-                      currency: form.currency,
+                      currency: 'USD',
                       receiptNumber: form.receiptNumber,
                       description: form.receiptNumber || `Payment for Invoice: ${item.invoiceNo}`,
                       // File path'i hemen gösteremeyiz çünkü sunucudan dönen path'i bilmiyoruz (response body'de yoksa).

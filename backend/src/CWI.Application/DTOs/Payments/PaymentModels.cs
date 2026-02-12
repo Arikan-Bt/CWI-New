@@ -9,7 +9,7 @@ public class CreatePaymentRequest
 {
     public int CustomerId { get; set; }
     public string? PaymentMethodCode { get; set; }
-    public string CurrencyCode { get; set; } = "TRY";
+    public string CurrencyCode { get; set; } = "USD";
     public decimal Amount { get; set; }
     public string? ReceiptNumber { get; set; }
     public DateTime PaymentDate { get; set; }

@@ -37,7 +37,6 @@ import { finalize } from 'rxjs';
 interface PaymentForm {
   customerCode: string | null;
   referenceCode: string | null;
-  currency: string;
   amount: number | null;
   receiptNumber: string;
   date: Date;
@@ -277,20 +276,6 @@ interface PaymentForm {
             ></p-select>
           </div>
 
-          <!-- Currency Selection -->
-          <div class="flex flex-col gap-2">
-            <label for="modal-currency" class="font-medium">Currency</label>
-            <p-select
-              id="modal-currency"
-              [options]="currencyOptions"
-              [(ngModel)]="paymentForm().currency"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Select"
-              appendTo="body"
-            ></p-select>
-          </div>
-
           <!-- Payment Amount -->
           <div class="flex flex-col gap-2">
             <label for="modal-amount" class="font-medium">Payment Amount</label>
@@ -298,42 +283,39 @@ interface PaymentForm {
               id="modal-amount"
               [(ngModel)]="paymentForm().amount"
               mode="currency"
-              [currency]="paymentForm().currency || 'USD'"
+              currency="USD"
               locale="en-US"
               placeholder="0.00"
             ></p-inputnumber>
           </div>
 
-          <!-- Receipt Number + Transaction Date Container -->
-          <div class="flex gap-4">
-            <!-- Receipt Number -->
-            <div class="flex-1 flex flex-col gap-2">
-              <label for="modal-receipt" class="font-medium">Receipt / Document No</label>
-              <p-iconfield iconPosition="left" class="w-full">
-                <p-inputicon class="pi pi-file-edit"></p-inputicon>
-                <input
-                  id="modal-receipt"
-                  pInputText
-                  [(ngModel)]="paymentForm().receiptNumber"
-                  placeholder="Enter document number"
-                  class="w-full"
-                />
-              </p-iconfield>
-            </div>
+          <!-- Receipt Number -->
+          <div class="flex flex-col gap-2">
+            <label for="modal-receipt" class="font-medium">Receipt / Document No</label>
+            <p-iconfield iconPosition="left" class="w-full">
+              <p-inputicon class="pi pi-file-edit"></p-inputicon>
+              <input
+                id="modal-receipt"
+                pInputText
+                [(ngModel)]="paymentForm().receiptNumber"
+                placeholder="Enter document number"
+                class="w-full"
+              />
+            </p-iconfield>
+          </div>
 
-            <!-- Date -->
-            <div class="flex-1 flex flex-col gap-2">
-              <label for="modal-date" class="font-medium">Transaction Date</label>
-              <p-datepicker
-                id="modal-date"
-                [(ngModel)]="paymentForm().date"
-                [showIcon]="true"
-                dateFormat="dd.mm.yy"
-                placeholder="Select date"
-                appendTo="body"
-                [fluid]="true"
-              ></p-datepicker>
-            </div>
+          <!-- Date -->
+          <div class="flex flex-col gap-2">
+            <label for="modal-date" class="font-medium">Transaction Date</label>
+            <p-datepicker
+              id="modal-date"
+              [(ngModel)]="paymentForm().date"
+              [showIcon]="true"
+              dateFormat="dd.mm.yy"
+              placeholder="Select date"
+              appendTo="body"
+              [fluid]="true"
+            ></p-datepicker>
           </div>
 
           <!-- Notes -->
@@ -477,7 +459,6 @@ export class CustomerBalance implements OnInit {
   paymentForm = signal<PaymentForm>({
     customerCode: null,
     referenceCode: null,
-    currency: 'USD',
     amount: null,
     receiptNumber: '',
     date: new Date(),
@@ -486,12 +467,6 @@ export class CustomerBalance implements OnInit {
 
   // Dinamik referans listesi - müşteri seçildiğinde yüklenir
   referenceOptions = signal<{ label: string; value: string; balance?: number }[]>([]);
-
-  currencyOptions = [
-    { label: 'TRY', value: 'TRY' },
-    { label: 'USD', value: 'USD' },
-    { label: 'EUR', value: 'EUR' },
-  ];
 
   ngOnInit() {
     // Sayfa açıldığında müşteri listesini yükle
@@ -522,7 +497,6 @@ export class CustomerBalance implements OnInit {
     this.paymentForm.set({
       customerCode: null,
       referenceCode: null,
-      currency: 'USD',
       amount: null,
       receiptNumber: '',
       date: new Date(),
@@ -602,7 +576,7 @@ export class CustomerBalance implements OnInit {
     const formData = new FormData();
     formData.append('CustomerCode', form.customerCode);
     formData.append('ReferenceCode', form.referenceCode || '');
-    formData.append('CurrencyCode', form.currency);
+    formData.append('CurrencyCode', 'USD');
     formData.append('Amount', (form.amount || 0).toString());
     formData.append('ReceiptNumber', form.receiptNumber);
     formData.append('PaymentDate', form.date.toISOString());

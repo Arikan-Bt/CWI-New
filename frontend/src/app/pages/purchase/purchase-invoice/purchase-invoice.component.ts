@@ -75,19 +75,6 @@ import { PurchasingService } from '../../../core/services/purchasing.service';
                 ></p-datepicker>
               </div>
 
-              <!-- Select Currency -->
-              <div class="flex flex-col gap-2">
-                <label for="currency" class="font-medium">Select Currency</label>
-                <p-select
-                  id="currency"
-                  [options]="currencyOptions"
-                  [(ngModel)]="invoiceForm().currency"
-                  optionLabel="label"
-                  optionValue="value"
-                  placeholder="Select currency"
-                ></p-select>
-              </div>
-
               <!-- Enter Invoice Amount -->
               <div class="flex flex-col gap-2">
                 <label for="amount" class="font-medium">Enter Invoice Amount</label>
@@ -213,19 +200,12 @@ export class PurchaseInvoice implements OnInit {
   invoiceForm = signal({
     vendorCode: null as string | null,
     date: new Date(),
-    currency: 'USD',
     amount: null as number | null,
     invoiceNumber: '',
     description: '',
   });
 
   vendorOptions = signal<{ label: string; value: string }[]>([]);
-
-  currencyOptions = [
-    { label: 'USD', value: 'USD' },
-    { label: 'EUR', value: 'EUR' },
-    { label: 'TRY', value: 'TRY' },
-  ];
 
   ngOnInit() {
     this.loadVendors();
@@ -280,7 +260,7 @@ export class PurchaseInvoice implements OnInit {
     const formData = new FormData();
     formData.append('VendorCode', form.vendorCode);
     formData.append('InvoiceDate', form.date.toISOString());
-    formData.append('CurrencyCode', form.currency);
+    formData.append('CurrencyCode', 'USD');
     formData.append('Amount', form.amount.toString());
     formData.append('InvoiceNumber', form.invoiceNumber);
     if (form.description) {
@@ -304,7 +284,6 @@ export class PurchaseInvoice implements OnInit {
           this.invoiceForm.set({
             vendorCode: null,
             date: new Date(),
-            currency: 'USD',
             amount: null,
             invoiceNumber: '',
             description: '',

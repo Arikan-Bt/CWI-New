@@ -13,12 +13,12 @@ public sealed record Money
     /// <summary>
     /// Para birimi kodu (örn: TRY, USD, EUR)
     /// </summary>
-    public string CurrencyCode { get; init; } = "TRY";
+    public string CurrencyCode { get; init; } = "USD";
     
     /// <summary>
     /// Sıfır tutar oluşturur
     /// </summary>
-    public static Money Zero(string currencyCode = "TRY") 
+    public static Money Zero(string currencyCode = "USD") 
         => new() { Amount = 0, CurrencyCode = currencyCode };
     
     /// <summary>

@@ -111,7 +111,7 @@ import * as XLSX from 'xlsx';
                   <td class="text-center">{{ line.balance }}</td>
                   <!-- Editable Fields -->
                   <td class="p-1 text-center">
-                    @if (isReadOnly()) {
+                    @if (isReadOnly() || isInvoiceActionsDisabled()) {
                       <span class="text-sm font-medium">{{
                         line.invoiceQty | number: '1.0-0'
                       }}</span>
@@ -130,7 +130,7 @@ import * as XLSX from 'xlsx';
                     }
                   </td>
                   <td class="p-1 text-right">
-                    @if (isReadOnly()) {
+                    @if (isReadOnly() || isInvoiceActionsDisabled()) {
                       <span class="text-sm font-medium">{{
                         line.invoiceUnitPrice | number: '1.2-2'
                       }}</span>
@@ -219,6 +219,7 @@ import * as XLSX from 'xlsx';
               severity="success"
               styleClass="px-8"
               (onClick)="fileInput.click()"
+              [disabled]="isInvoiceActionsDisabled()"
             ></p-button>
 
             <p-button
@@ -235,6 +236,7 @@ import * as XLSX from 'xlsx';
               styleClass="btn-action-red px-8"
               (onClick)="onSaveInvoice()"
               [loading]="saveLoading()"
+              [disabled]="isInvoiceActionsDisabled()"
             ></p-button>
           }
         </div>
@@ -476,6 +478,7 @@ import * as XLSX from 'xlsx';
               styleClass="btn-action-red"
               (onClick)="onConfirmSaveInvoice()"
               [loading]="saveLoading()"
+              [disabled]="isInvoiceActionsDisabled()"
             ></p-button>
           </div>
         </ng-template>
@@ -620,6 +623,7 @@ import * as XLSX from 'xlsx';
                       severity="danger"
                       (onClick)="onAction('Edit', order)"
                       pTooltip="Edit Invoice"
+                      [disabled]="isOrderEditDisabled(order)"
                     ></p-button>
                     <p-button
                       icon="pi pi-search"
@@ -940,6 +944,14 @@ export class PurchaseReceive implements OnInit {
   totalBalanceQty = computed(() =>
     this.invoiceLines().reduce((acc, line) => acc + (line.balance || 0), 0),
   );
+  isInvoiceActionsDisabled = computed(() => {
+    const lines = this.invoiceLines();
+    if (lines.length === 0) {
+      return false;
+    }
+
+    return lines.every((line) => (line.balance || 0) <= 0);
+  });
 
   // Invoice totals based on editable fields
   totalInvoiceQty = computed(() =>
@@ -1062,7 +1074,20 @@ export class PurchaseReceive implements OnInit {
    * Edit veya View aksiyonları
    */
   onAction(type: 'Edit' | 'View', order: PurchaseOrderDto) {
+    if (type === 'Edit' && this.isOrderEditDisabled(order)) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Warning',
+        detail: 'This order is fully received. You can review details from View.',
+      });
+      return;
+    }
+
     this.openModal(order, type === 'View');
+  }
+
+  isOrderEditDisabled(order: PurchaseOrderDto): boolean {
+    return order.status === 'Inactive';
   }
 
   /**
@@ -1126,6 +1151,15 @@ export class PurchaseReceive implements OnInit {
    * Faturayı Kaydet (Dialog Aç)
    */
   onSaveInvoice() {
+    if (this.isInvoiceActionsDisabled()) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Warning',
+        detail: 'All stock is completed for this order. Invoice cannot be saved.',
+      });
+      return;
+    }
+
     if (this.totalInvoiceQty() <= 0) {
       this.messageService.add({
         severity: 'warn',
@@ -1158,6 +1192,14 @@ export class PurchaseReceive implements OnInit {
     const invDate = this.invoiceDate();
 
     if (!order) return;
+    if (this.isInvoiceActionsDisabled()) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Warning',
+        detail: 'All stock is completed for this order. Invoice cannot be saved.',
+      });
+      return;
+    }
     if (!invNum) {
       this.messageService.add({
         severity: 'warn',
@@ -1236,6 +1278,11 @@ export class PurchaseReceive implements OnInit {
    * Excel Dosyası Yükleme ve İşleme
    */
   onFileChange(event: any) {
+    if (this.isInvoiceActionsDisabled()) {
+      event.target.value = '';
+      return;
+    }
+
     const target: DataTransfer = <DataTransfer>event.target;
     if (target.files.length !== 1) {
       return;
