@@ -1187,13 +1187,7 @@ export class PurchaseReceive implements OnInit {
 
     this.saveLoading.set(true);
     this.purchaseService
-      .saveInvoice(
-        order.id,
-        invNum,
-        invDate,
-        this.filteredInvoiceLines(),
-        this.selectedInvoiceFile,
-      )
+      .saveInvoice(order.id, invNum, invDate, this.filteredInvoiceLines(), this.selectedInvoiceFile)
       .pipe(finalize(() => this.saveLoading.set(false)))
       .subscribe({
         next: () => {
@@ -1293,7 +1287,7 @@ export class PurchaseReceive implements OnInit {
 
         if (lineIndex !== -1) {
           const qty = parseFloat(normalizedRow['QTY']);
-          const price = parseFloat(normalizedRow['PRICE']);
+          const price = parseFloat(normalizedRow['UNIT PRICE'] || normalizedRow['PRICE']);
           const warehouseName = normalizedRow['WAREHOUSE'];
           const shelfNumber = normalizedRow['SHELF NUMBER1'];
           const packList = normalizedRow['PACK LIST'];
@@ -1400,7 +1394,7 @@ export class PurchaseReceive implements OnInit {
       'SUPPLIER',
       'SKU NO',
       'QTY',
-      'PRICE',
+      'UNIT PRICE',
       'CURRENCY',
       'WAREHOUSE',
       'SHELF NUMBER1',

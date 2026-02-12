@@ -85,7 +85,7 @@ import { finalize } from 'rxjs';
               }
             </p-tablist>
 
-            <p-tabpanels>
+            <p-tabpanels style="height: 100%">
               <!-- Dashboard -->
               @if (isEditMode()) {
                 <p-tabpanel value="0">
@@ -105,12 +105,10 @@ import { finalize } from 'rxjs';
 
               <!-- Profile -->
               <p-tabpanel value="1">
-                <div class="p-8 h-full overflow-y-auto">
-                  <div
-                    class="grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-6 max-w-[1400px] mx-auto pb-10"
-                  >
+                <div class="px-6 py-8 h-full overflow-y-auto">
+                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-20 gap-y-8 w-full pb-10">
                     <!-- SOL KOLON: Şifre ve Temel Bilgiler -->
-                    <div class="flex flex-col gap-6">
+                    <div class="flex flex-col gap-6 w-full">
                       @if (isSelfProfile()) {
                         <div class="border-b border-gray-100 dark:border-surface-800 pb-2 mb-2">
                           <h3 class="font-bold text-gray-800 dark:text-gray-100">
@@ -119,12 +117,12 @@ import { finalize } from 'rxjs';
                         </div>
 
                         <!-- Mevcut Şifre -->
-                        <div class="grid grid-cols-1 md:grid-cols-4 items-center gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-4">
                           <label
                             class="md:text-right font-bold text-sm text-gray-600 dark:text-muted-color"
                             >Current Password</label
                           >
-                          <div class="md:col-span-3">
+                          <div class="md:col-span-4">
                             <input
                               pInputText
                               type="password"
@@ -136,12 +134,12 @@ import { finalize } from 'rxjs';
                         </div>
 
                         <!-- Yeni Şifre -->
-                        <div class="grid grid-cols-1 md:grid-cols-4 items-center gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-4">
                           <label
                             class="md:text-right font-bold text-sm text-gray-600 dark:text-muted-color"
-                            >New Password</label
+                            >Select Password (not displayed)</label
                           >
-                          <div class="md:col-span-3">
+                          <div class="md:col-span-4">
                             <input
                               pInputText
                               type="password"
@@ -153,12 +151,12 @@ import { finalize } from 'rxjs';
                         </div>
 
                         <!-- Şifre Onay -->
-                        <div class="grid grid-cols-1 md:grid-cols-4 items-center gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-4">
                           <label
                             class="md:text-right font-bold text-sm text-gray-600 dark:text-muted-color"
                             >Confirm Password</label
                           >
-                          <div class="md:col-span-3">
+                          <div class="md:col-span-4">
                             <input
                               pInputText
                               type="password"
@@ -184,12 +182,12 @@ import { finalize } from 'rxjs';
                         </div>
 
                         <!-- Client Code -->
-                        <div class="grid grid-cols-1 md:grid-cols-4 items-center gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-4">
                           <label
                             class="md:text-right font-bold text-sm text-gray-600 dark:text-muted-color"
                             >Client Code</label
                           >
-                          <div class="md:col-span-3">
+                          <div class="md:col-span-4">
                             <input
                               pInputText
                               [(ngModel)]="userForm().clientCode"
@@ -202,12 +200,12 @@ import { finalize } from 'rxjs';
                         </div>
 
                         <!-- Admin Password -->
-                        <div class="grid grid-cols-1 md:grid-cols-4 items-center gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-4">
                           <label
                             class="md:text-right font-bold text-sm text-gray-600 dark:text-muted-color"
                             >Password</label
                           >
-                          <div class="md:col-span-3">
+                          <div class="md:col-span-4">
                             <input
                               pInputText
                               type="password"
@@ -219,12 +217,12 @@ import { finalize } from 'rxjs';
                         </div>
 
                         <!-- Role -->
-                        <div class="grid grid-cols-1 md:grid-cols-4 items-center gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-4">
                           <label
                             class="md:text-right font-bold text-sm text-gray-600 dark:text-muted-color"
                             >Role</label
                           >
-                          <div class="md:col-span-3">
+                          <div class="md:col-span-4">
                             <p-select
                               [options]="roles()"
                               [(ngModel)]="userForm().roleId"
@@ -238,12 +236,12 @@ import { finalize } from 'rxjs';
                         </div>
 
                         <!-- Status -->
-                        <div class="grid grid-cols-1 md:grid-cols-4 items-center gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-4">
                           <label
                             class="md:text-right font-bold text-sm text-gray-600 dark:text-muted-color"
                             >Status</label
                           >
-                          <div class="md:col-span-3">
+                          <div class="md:col-span-4">
                             <p-select
                               [options]="statusOptions"
                               [(ngModel)]="userForm().status"
@@ -266,12 +264,12 @@ import { finalize } from 'rxjs';
                       </div>
 
                       <!-- Ad -->
-                      <div class="grid grid-cols-1 md:grid-cols-4 items-center gap-4">
+                      <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-4">
                         <label
                           class="md:text-right font-bold text-sm text-gray-600 dark:text-muted-color"
                           >First Name</label
                         >
-                        <div class="md:col-span-3">
+                        <div class="md:col-span-4">
                           <input
                             pInputText
                             [(ngModel)]="userForm().name"
@@ -282,12 +280,12 @@ import { finalize } from 'rxjs';
                       </div>
 
                       <!-- Soyad -->
-                      <div class="grid grid-cols-1 md:grid-cols-4 items-center gap-4">
+                      <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-4">
                         <label
                           class="md:text-right font-bold text-sm text-gray-600 dark:text-muted-color"
                           >Last Name</label
                         >
-                        <div class="md:col-span-3">
+                        <div class="md:col-span-4">
                           <input
                             pInputText
                             [(ngModel)]="userForm().surname"
@@ -298,12 +296,12 @@ import { finalize } from 'rxjs';
                       </div>
 
                       <!-- E-posta -->
-                      <div class="grid grid-cols-1 md:grid-cols-4 items-center gap-4">
+                      <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-4">
                         <label
                           class="md:text-right font-bold text-sm text-gray-600 dark:text-muted-color"
                           >Email Address</label
                         >
-                        <div class="md:col-span-3">
+                        <div class="md:col-span-4">
                           <input
                             pInputText
                             [(ngModel)]="userForm().email"
@@ -314,12 +312,12 @@ import { finalize } from 'rxjs';
                       </div>
 
                       <!-- Telefon -->
-                      <div class="grid grid-cols-1 md:grid-cols-4 items-center gap-4">
+                      <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-4">
                         <label
                           class="md:text-right font-bold text-sm text-gray-600 dark:text-muted-color"
                           >Mobile Phone</label
                         >
-                        <div class="md:col-span-3">
+                        <div class="md:col-span-4">
                           <input
                             pInputText
                             [(ngModel)]="userForm().mobilePhone"
@@ -331,12 +329,12 @@ import { finalize } from 'rxjs';
 
                       <!-- Cari Hesap (Sadece Admin modunda) -->
                       @if (!isSelfProfile()) {
-                        <div class="grid grid-cols-1 md:grid-cols-4 items-center gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-4">
                           <label
                             class="md:text-right font-bold text-sm text-gray-600 dark:text-muted-color"
                             >Current Account</label
                           >
-                          <div class="md:col-span-3">
+                          <div class="md:col-span-4">
                             <p-select
                               [options]="accountOptions()"
                               [(ngModel)]="userForm().currentAccount"
@@ -356,8 +354,8 @@ import { finalize } from 'rxjs';
               <!-- Restrictions (Admin Only) -->
               @if (!isSelfProfile()) {
                 <p-tabpanel value="2">
-                  <div class="p-8 w-full h-full overflow-y-auto pb-20">
-                    <div class="flex flex-col gap-8">
+                  <div class="px-6 py-8 w-full h-full overflow-y-auto pb-20">
+                    <div class="flex flex-col gap-8 w-full">
                       <!-- Allowed Brands -->
                       <div class="flex flex-col gap-2">
                         <label class="text-xs font-bold text-gray-500 uppercase"
@@ -510,8 +508,8 @@ import { finalize } from 'rxjs';
         }
 
         .custom-tabs .p-tabpanels {
-          flex: 1 1 0% !important; /* Allow growing/shrinking */
-          height: auto !important; /* Do NOT force 100% height, let flex handle it */
+          flex: 1 1 0% !important;
+          height: 100% !important;
           min-height: 0 !important;
           overflow: hidden !important;
           background-color: var(--p-surface-ground, #f8fafc);

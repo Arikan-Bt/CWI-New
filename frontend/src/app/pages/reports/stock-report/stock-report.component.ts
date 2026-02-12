@@ -132,16 +132,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
               <th pSortableColumn="incomingStock" class="text-center">
                 Incoming Stock <p-sortIcon field="incomingStock"></p-sortIcon>
               </th>
-              <th pSortableColumn="shelfNumber" class="text-center">
-                <div class="flex justify-center items-center gap-2">
-                  Main Shelf <p-sortIcon field="shelfNumber"></p-sortIcon>
-                  <p-columnFilter type="text" field="shelfNumber" display="menu"></p-columnFilter>
-                </div>
-              </th>
-              <th class="text-right">
-                <!-- Removed RSP Sort as BE doesn't support it yet -->
-                RSP
-              </th>
               <th>Special Note</th>
             </tr>
           </ng-template>
@@ -206,10 +196,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
               <td class="text-center font-semibold text-blue-500">
                 {{ item.incomingStock | number }}
               </td>
-              <td class="text-center">{{ item.shelfNumber || '-' }}</td>
-              <td class="text-right font-medium">
-                {{ item.retailSalesPrice | currency: 'USD' : 'symbol' : '1.2-2' }}
-              </td>
               <td>
                 <div class="flex gap-2 items-start">
                   <textarea
@@ -232,7 +218,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
           <ng-template pTemplate="expandedrow" let-item>
             <tr>
-              <td colspan="11">
+              <td colspan="9">
                 <div
                   class="p-4 bg-surface-50 dark:bg-surface-900 border-x border-b border-surface-200 dark:border-surface-700"
                 >
@@ -253,14 +239,17 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                           >
                             <ng-template pTemplate="header">
                               <tr>
+                                <th>Vendor</th>
                                 <th>Shelf Number</th>
                                 <th>Pack List</th>
                                 <th>Receive Date</th>
+                                <th class="text-right">Price</th>
                                 <th class="text-center">Quantity</th>
                               </tr>
                             </ng-template>
                             <ng-template pTemplate="body" let-detail>
                               <tr>
+                                <td>{{ detail.supplierName || '-' }}</td>
                                 <td>{{ detail.shelfNumber || '-' }}</td>
                                 <td>{{ detail.packList || '-' }}</td>
                                 <td>
@@ -270,6 +259,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                                         | date: 'dd.MM.yyyy HH:mm')
                                       : '-'
                                   }}
+                                </td>
+                                <td class="text-right font-medium">
+                                  {{ detail.price | currency: detail.currency || 'USD' }}
                                 </td>
                                 <td
                                   class="text-center font-bold"
@@ -301,7 +293,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td colspan="11" class="text-center p-8 text-surface-400">No stock items found.</td>
+              <td colspan="9" class="text-center p-8 text-surface-400">No stock items found.</td>
             </tr>
           </ng-template>
         </p-table>

@@ -4,6 +4,8 @@ using CWI.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authorization;
+using CWI.Infrastructure.Auth;
 
 namespace CWI.Infrastructure;
 
@@ -45,6 +47,10 @@ public static class DependencyInjection
         // Auth servisleri
         services.AddScoped<Application.Interfaces.Services.IAuthService, Auth.AuthService>();
         services.AddScoped<Application.Interfaces.Services.ICurrentUserService, Services.CurrentUserService>();
+        
+        // Authorization
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
         
         return services;
     }

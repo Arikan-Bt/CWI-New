@@ -124,7 +124,6 @@ public class ExportStockReportQuery : IRequest<byte[]>
             worksheet.Cells[1, col++].Value = "Total Stock";
             worksheet.Cells[1, col++].Value = "Reserved";
             worksheet.Cells[1, col++].Value = "Available";
-            worksheet.Cells[1, col++].Value = "RSP";
             worksheet.Cells[1, col++].Value = "Note";
             worksheet.Cells[1, col++].Value = "Detail Qty";
             worksheet.Cells[1, col++].Value = "Movement Type";
@@ -132,7 +131,6 @@ public class ExportStockReportQuery : IRequest<byte[]>
             worksheet.Cells[1, col++].Value = "Source Document";
             worksheet.Cells[1, col++].Value = "Reference No";
             worksheet.Cells[1, col++].Value = "Warehouse";
-            worksheet.Cells[1, col++].Value = "Shelf No";
             worksheet.Cells[1, col++].Value = "Pack List";
             worksheet.Cells[1, col++].Value = "Supplier";
             worksheet.Cells[1, col++].Value = "Occurred At";
@@ -168,7 +166,6 @@ public class ExportStockReportQuery : IRequest<byte[]>
                     worksheet.Cells[row, col++].Value = item.Stock;
                     worksheet.Cells[row, col++].Value = item.Reserved;
                     worksheet.Cells[row, col++].Value = item.Available;
-                    worksheet.Cells[row, col++].Value = item.RetailSalesPrice;
                     worksheet.Cells[row, col++].Value = item.SpecialNote;
                     worksheet.Cells[row, col++].Value = detail.Quantity;
                     worksheet.Cells[row, col++].Value = detail.MovementType;
@@ -176,7 +173,6 @@ public class ExportStockReportQuery : IRequest<byte[]>
                     worksheet.Cells[row, col++].Value = detail.SourceDocumentType;
                     worksheet.Cells[row, col++].Value = detail.ReferenceNo;
                     worksheet.Cells[row, col++].Value = detail.WarehouseName;
-                    worksheet.Cells[row, col++].Value = detail.ShelfNumber;
                     worksheet.Cells[row, col++].Value = detail.PackList;
                     worksheet.Cells[row, col++].Value = detail.SupplierName;
                     worksheet.Cells[row, col++].Value = (detail.OccurredAt ?? detail.ReceiveDate)?.ToString("dd.MM.yyyy HH:mm");
@@ -232,7 +228,8 @@ public class ExportStockReportQuery : IRequest<byte[]>
             var fallbackSales = await _unitOfWork.Repository<OrderItem, long>().AsQueryable()
                 .Include(x => x.Product)
                 .Include(x => x.Order)
-                .Where(x => productSkus.Contains(x.Product.Sku) && x.Order.Status == OrderStatus.Shipped)
+                .Where(x => productSkus.Contains(x.Product.Sku) && 
+                            (x.Order.Status == OrderStatus.Shipped || x.Order.Status == OrderStatus.PackedAndWaitingShipment))
                 .OrderByDescending(x => x.Order.ShippedAt ?? x.Order.OrderedAt)
                 .ToListAsync(cancellationToken);
 
@@ -242,8 +239,7 @@ public class ExportStockReportQuery : IRequest<byte[]>
                 .Where(x => productSkus.Contains(x.Product.Sku)
                             && (x.Order.Status == OrderStatus.Pending
                                 || x.Order.Status == OrderStatus.Approved
-                                || x.Order.Status == OrderStatus.PreOrder
-                                || x.Order.Status == OrderStatus.PackedAndWaitingShipment))
+                                || x.Order.Status == OrderStatus.PreOrder))
                 .OrderByDescending(x => x.Order.OrderedAt)
                 .ToListAsync(cancellationToken);
 

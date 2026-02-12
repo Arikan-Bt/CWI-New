@@ -44,6 +44,8 @@ export interface StockReportDetail {
   warehouseId?: number;
   warehouseName?: string;
   supplierName?: string;
+  price?: number;
+  currency?: string;
 }
 
 export interface UpdateStockNoteRequest {

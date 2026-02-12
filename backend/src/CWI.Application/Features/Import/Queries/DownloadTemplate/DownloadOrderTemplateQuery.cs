@@ -19,9 +19,10 @@ public class DownloadOrderTemplateQueryHandler : IRequestHandler<DownloadOrderTe
         worksheet.Cells[1, 1].Value = "ProductCode";
         worksheet.Cells[1, 2].Value = "Quantity";
         worksheet.Cells[1, 3].Value = "Price";
+        worksheet.Cells[1, 4].Value = "Season";
 
         // Header style
-        using (var range = worksheet.Cells[1, 1, 1, 3])
+        using (var range = worksheet.Cells[1, 1, 1, 4])
         {
             range.Style.Font.Bold = true;
             range.Style.Fill.PatternType = ExcelFillStyle.Solid;
@@ -33,10 +34,12 @@ public class DownloadOrderTemplateQueryHandler : IRequestHandler<DownloadOrderTe
         worksheet.Cells[2, 1].Value = "PRD001";
         worksheet.Cells[2, 2].Value = 10;
         worksheet.Cells[2, 3].Value = 12.50m;
+        worksheet.Cells[2, 4].Value = "SUMMER 2026";
 
         worksheet.Column(1).AutoFit();
         worksheet.Column(2).AutoFit();
         worksheet.Column(3).AutoFit();
+        worksheet.Column(4).AutoFit();
 
         return await Task.FromResult(package.GetAsByteArray());
     }

@@ -1,0 +1,22 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="200" height="200" rx="16" fill="white" />
+  
+  <!-- Outer Border (Optional, matches the card look) -->
+  <rect x="2" y="2" width="196" height="196" rx="14" fill="none" stroke="#e5e7eb" stroke-width="4"/>
+
+  <!-- Icon Group -->
+  <g transform="translate(68, 50)" fill="none" stroke="#9ca3af" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Image Icon Frame -->
+    <rect x="0" y="0" width="64" height="64" rx="8" />
+    <!-- Mountain -->
+    <path d="M18 50 l12 -18 l8 8 l10 -14 l14 24 H18" />
+    <!-- Sun -->
+    <circle cx="20" cy="20" r="4" />
+  </g>
+
+  <!-- Text -->
+  <text x="100" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" letter-spacing="2" fill="#9ca3af">
+    NO IMAGE
+  </text>
+</svg>

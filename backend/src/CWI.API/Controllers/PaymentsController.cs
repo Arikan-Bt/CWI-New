@@ -5,6 +5,7 @@ using CWI.Application.Features.Payments.Commands.ApprovePayment;
 using CWI.Application.Features.Payments.Commands.RejectPayment;
 using CWI.Application.Features.Payments.Commands.UploadReceipt;
 using CWI.Application.Features.Payments.Queries;
+using CWI.Application.Features.Payments.Queries.GetCurrencies;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -76,5 +77,12 @@ public class PaymentsController : ControllerBase
         if (id != command.PaymentId && command.PaymentId == 0) command.PaymentId = id;
         var result = await _mediator.Send(command);
         return Ok(Result<bool>.Succeed(result));
+    }
+
+    [HttpGet("currencies")]
+    public async Task<ActionResult<Result<List<CurrencyDto>>>> GetCurrencies()
+    {
+        var result = await _mediator.Send(new GetCurrenciesQuery());
+        return Ok(Result<List<CurrencyDto>>.Succeed(result));
     }
 }

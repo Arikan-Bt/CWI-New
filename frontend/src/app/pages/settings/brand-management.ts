@@ -26,6 +26,7 @@ import {
   BrandDetailDto,
   CreateBrandDto,
   UpdateBrandDto,
+  BrandProductDto,
   ProjectType,
 } from '../../core/services/brand.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -131,7 +132,7 @@ import { finalize } from 'rxjs/operators';
                 <p-columnFilter type="text" field="isActive" display="menu"></p-columnFilter>
               </div>
             </th>
-            <th style="width: 8rem" class="text-center">Actions</th>
+            <th style="width: 10rem" class="text-center">Actions</th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-brand>
@@ -162,6 +163,16 @@ import { finalize } from 'rxjs/operators';
                   [text]="true"
                   severity="secondary"
                   (onClick)="openEditModal(brand)"
+                  pTooltip="Edit Brand"
+                  tooltipPosition="bottom"
+                ></p-button>
+                <p-button
+                  icon="pi pi-box"
+                  [text]="true"
+                  severity="info"
+                  (onClick)="openProductsModal(brand)"
+                  pTooltip="Manage Products"
+                  tooltipPosition="bottom"
                 ></p-button>
                 <p-button
                   icon="pi pi-trash"
@@ -278,6 +289,105 @@ import { finalize } from 'rxjs/operators';
           </div>
         </ng-template>
       </p-dialog>
+      <!-- Marka Ürünleri Modal -->
+      <p-dialog
+        [(visible)]="productsModalVisible"
+        [header]="'Manage Products for ' + (selectedBrandForProducts?.name || '')"
+        [modal]="true"
+        [style]="{ width: '100vw', height: '100vh' }"
+        [closable]="!savingProducts()"
+        [maximizable]="true"
+        contentStyleClass="h-full"
+      >
+        <div class="flex flex-col gap-4 pt-2">
+          <!-- Arama -->
+          <p-iconfield iconPosition="left">
+            <p-inputicon class="pi pi-search"></p-inputicon>
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="productSearch"
+              placeholder="Search products by code or name..."
+              class="w-full"
+            />
+          </p-iconfield>
+
+          <p-table
+            [value]="filteredProducts()"
+            [scrollable]="true"
+            scrollHeight="400px"
+            styleClass="p-datatable-sm p-datatable-striped"
+            [virtualScroll]="true"
+            [virtualScrollItemSize]="46"
+          >
+            <ng-template pTemplate="header">
+              <tr>
+                <th style="width: 4rem" class="text-center">
+                  <p-checkbox
+                    [binary]="true"
+                    (onChange)="toggleAllProducts($event)"
+                    [disabled]="savingProducts()"
+                  ></p-checkbox>
+                </th>
+                <th pSortableColumn="sku">SKU <p-sortIcon field="sku"></p-sortIcon></th>
+                <th pSortableColumn="name">Product Name <p-sortIcon field="name"></p-sortIcon></th>
+                <th>Current Brand</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-product>
+              <tr>
+                <td class="text-center">
+                  <p-checkbox
+                    [(ngModel)]="product.isSelected"
+                    [binary]="true"
+                    [disabled]="savingProducts()"
+                  ></p-checkbox>
+                </td>
+                <td>{{ product.sku }}</td>
+                <!-- İstenen: Product Name olarak brand adı gösterilecek -->
+                <td>
+                  <div class="flex flex-col">
+                    <span class="font-medium">{{ product.brandName || product.name }}</span>
+                    @if (product.brandName && product.brandName !== product.name) {
+                      <span class="text-xs text-gray-500">({{ product.name }})</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  @if (product.brandName) {
+                    <p-tag [value]="product.brandName" severity="info"></p-tag>
+                  } @else {
+                    <span class="text-gray-400">-</span>
+                  }
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="4" class="text-center p-4">No products found.</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+
+        <ng-template pTemplate="footer">
+          <div class="flex justify-end gap-2">
+            <p-button
+              label="Cancel"
+              severity="secondary"
+              [text]="true"
+              (onClick)="closeProductsModal()"
+              [disabled]="savingProducts()"
+            ></p-button>
+            <p-button
+              label="Save Changes"
+              icon="pi pi-check"
+              (onClick)="saveBrandProducts()"
+              [loading]="savingProducts()"
+            ></p-button>
+          </div>
+        </ng-template>
+      </p-dialog>
     </div>
   `,
   styles: [
@@ -296,6 +406,13 @@ export class BrandManagement {
   totalRecords = signal(0);
   loading = signal(false);
   saving = signal(false);
+
+  // Product Assignment State
+  productsModalVisible = false;
+  brandProducts = signal<BrandProductDto[]>([]);
+  productSearch = '';
+  savingProducts = signal(false);
+  selectedBrandForProducts: BrandDetailDto | null = null;
 
   // Services
   private brandService = inject(BrandService);
@@ -540,6 +657,113 @@ export class BrandManagement {
           });
       },
     });
+  }
+
+  /**
+   * Ürün yönetimi modalını açar
+   */
+  openProductsModal(brand: BrandDetailDto) {
+    this.selectedBrandForProducts = brand;
+    this.productSearch = '';
+    this.loading.set(true);
+
+    this.brandService
+      .getBrandProducts(brand.id)
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (res) => {
+          if (res.success) {
+            this.brandProducts.set(res.data);
+            this.productsModalVisible = true;
+          }
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to load products.',
+          });
+        },
+      });
+  }
+
+  /**
+   * Ürün yönetimi modalını kapatır
+   */
+  closeProductsModal() {
+    this.productsModalVisible = false;
+    this.selectedBrandForProducts = null;
+    this.brandProducts.set([]);
+  }
+
+  /**
+   * Filtrelenmiş ürün listesi (arama için)
+   */
+  filteredProducts() {
+    const search = this.productSearch.toLowerCase().trim();
+    if (!search) return this.brandProducts();
+
+    return this.brandProducts().filter(
+      (p) =>
+        p.sku.toLowerCase().includes(search) ||
+        p.name.toLowerCase().includes(search) ||
+        (p.brandName && p.brandName.toLowerCase().includes(search)),
+    );
+  }
+
+  /**
+   * Tüm ürünleri seç/kaldır
+   */
+  toggleAllProducts(event: any) {
+    const isChecked = event.checked;
+    const currentProducts = this.filteredProducts();
+
+    // Sadece filtrelenmiş (görünen) ürünleri etkilemeli
+    this.brandProducts.update((products) => {
+      return products.map((p) => {
+        // Eğer ürün filtrelenen listedeyse durumunu güncelle
+        if (currentProducts.some((cp) => cp.id === p.id)) {
+          return { ...p, isSelected: isChecked };
+        }
+        return p;
+      });
+    });
+  }
+
+  /**
+   * Ürün atamalarını kaydeder
+   */
+  saveBrandProducts() {
+    if (!this.selectedBrandForProducts) return;
+
+    const selectedIds = this.brandProducts()
+      .filter((p) => p.isSelected)
+      .map((p) => p.id);
+
+    this.savingProducts.set(true);
+
+    this.brandService
+      .updateBrandProducts(this.selectedBrandForProducts.id, selectedIds)
+      .pipe(finalize(() => this.savingProducts.set(false)))
+      .subscribe({
+        next: (res) => {
+          if (res.success) {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Success',
+              detail: 'Brand products updated successfully.',
+            });
+            this.closeProductsModal();
+          }
+        },
+        error: (err) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: err.error?.error || 'Failed to update brand products',
+          });
+        },
+      });
   }
 
   /**

@@ -119,7 +119,9 @@ public class SavePurchaseOrderInvoiceCommand : IRequest<bool>
                             PackList = line.PackList,
                             ReceivingNumber = request.InvoiceNumber,
                             WarehouseId = targetWarehouseId.Value,
-                            SupplierName = order?.Supplier?.Name
+                            SupplierName = order?.Supplier?.Name,
+                            Price = line.InvoiceUnitPrice,
+                            Currency = "USD"
                         };
 
                         await stockAdjustmentRepo.AddAsync(receiveLog, cancellationToken);

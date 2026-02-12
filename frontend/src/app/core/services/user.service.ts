@@ -76,8 +76,8 @@ export class UserService {
     return this.http.get<ApiResult<PagedResult<UserDto>>>(this.apiUrl, { params });
   }
 
-  getUserById(id: any): Observable<UserDto> {
-    return this.http.get<UserDto>(`${this.apiUrl}/${id}`);
+  getUserById(id: any): Observable<ApiResult<UserDto>> {
+    return this.http.get<ApiResult<UserDto>>(`${this.apiUrl}/${id}`);
   }
 
   createUser(user: any): Observable<UserDto> {

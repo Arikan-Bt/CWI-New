@@ -58,6 +58,8 @@ public class StockReportDetailDto
     public int? WarehouseId { get; set; }
     public string? WarehouseName { get; set; }
     public string? SupplierName { get; set; }
+    public decimal? Price { get; set; }
+    public string? Currency { get; set; }
 }
 
 public class UpdateStockNoteRequest

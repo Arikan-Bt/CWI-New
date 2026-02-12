@@ -60,11 +60,11 @@ public class ReportsController : ControllerBase
         {
             new { label = "Load All", value = (string?)null },
             new { label = "Pre Order", value = CWI.Domain.Enums.OrderStatus.PreOrder.ToString() },
+            new { label = "Order", value = CWI.Domain.Enums.OrderStatus.Approved.ToString() },
             new { label = "Pending", value = CWI.Domain.Enums.OrderStatus.Pending.ToString() },
             new { label = "Packed & Waiting Shipment", value = CWI.Domain.Enums.OrderStatus.PackedAndWaitingShipment.ToString() },
             new { label = "Shipped", value = CWI.Domain.Enums.OrderStatus.Shipped.ToString() },
-            new { label = "Canceled", value = CWI.Domain.Enums.OrderStatus.Canceled.ToString() },
-            new { label = "Draft", value = CWI.Domain.Enums.OrderStatus.Draft.ToString() }
+            new { label = "Canceled", value = CWI.Domain.Enums.OrderStatus.Canceled.ToString() }
         };
         return Ok(Result<List<object>>.Succeed(statuses));
     }

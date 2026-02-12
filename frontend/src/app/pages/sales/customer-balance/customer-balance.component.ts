@@ -263,7 +263,7 @@ interface PaymentForm {
 
           <!-- Reference Code -->
           <div class="flex flex-col gap-2">
-            <label for="modal-reference" class="font-medium">Reference Code / Method</label>
+            <label for="modal-reference" class="font-medium">Invoice Num</label>
             <p-select
               id="modal-reference"
               [options]="referenceOptions()"
@@ -271,7 +271,7 @@ interface PaymentForm {
               (ngModelChange)="onReferenceChange($event)"
               optionLabel="label"
               optionValue="value"
-              placeholder="Select a reference"
+              placeholder="Select an invoice"
               appendTo="body"
               [loading]="loadingReferences()"
             ></p-select>

@@ -38,6 +38,28 @@ export const routes: Routes = [
           import('./pages/settings/warehouse-management').then((m) => m.WarehouseManagement),
       },
       {
+        path: 'pages/settings/brands',
+        loadComponent: () =>
+          import('./pages/settings/brand-management').then((m) => m.BrandManagement),
+      },
+      {
+        path: 'pages/settings/purchase-price-list',
+        loadComponent: () =>
+          import('./pages/settings/purchase-price-list').then((m) => m.PurchasePriceList),
+      },
+      {
+        path: 'pages/settings/sales-price-list',
+        loadComponent: () =>
+          import('./pages/settings/sales-price-list').then((m) => m.SalesPriceList),
+      },
+      {
+        path: 'pages/settings/product-visuals',
+        loadComponent: () =>
+          import('./pages/settings/product-visual-management').then(
+            (m) => m.ProductVisualManagement,
+          ),
+      },
+      {
         path: 'pages',
         loadChildren: () => import('./pages/pages.routes').then((m) => m.default),
       },

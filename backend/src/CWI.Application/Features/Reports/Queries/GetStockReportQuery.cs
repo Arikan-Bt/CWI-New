@@ -26,7 +26,7 @@ public class GetStockReportHandler : IRequestHandler<GetStockReportQuery, StockR
 
     public async Task<StockReportResponse> Handle(GetStockReportQuery request, CancellationToken cancellationToken)
     {
-        var productsQuery = _unitOfWork.Repository<Product, int>().AsQueryable();
+        var productsQuery = _unitOfWork.Repository<Product, int>().AsQueryable().Include(x => x.Brand);
         var inventoryQuery = _unitOfWork.Repository<InventoryItem, long>().AsQueryable();
         var purchaseOrderItemQuery = _unitOfWork.Repository<PurchaseOrderItem, long>().AsQueryable();
 
@@ -46,16 +46,13 @@ public class GetStockReportHandler : IRequestHandler<GetStockReportQuery, StockR
                     .Where(i => i.ProductId == p.Id && i.Quantity > i.ReceivedQuantity)
                     .Select(i => (int?)(i.Quantity - i.ReceivedQuantity))
                     .Sum() ?? 0,
-                ShelfNumber = inventoryQuery
-                    .Where(i => i.ProductId == p.Id)
-                    .Select(i => i.ShelfNumber)
-                    .FirstOrDefault(),
             })
             .Where(x => x.Stock != 0 || x.Reserved != 0 || x.IncomingStock != 0);
 
         if (!string.IsNullOrEmpty(request.Request.Brand))
         {
-            baseQuery = baseQuery.Where(x => x.Product.Brand != null && x.Product.Brand.Name == request.Request.Brand);
+            var brandName = request.Request.Brand.Trim().ToLower();
+            baseQuery = baseQuery.Where(x => x.Product.Brand != null && x.Product.Brand.Name.ToLower().Trim() == brandName);
         }
 
         if (!string.IsNullOrEmpty(request.Request.SearchValue))
@@ -77,11 +74,6 @@ public class GetStockReportHandler : IRequestHandler<GetStockReportQuery, StockR
             baseQuery = baseQuery.Where(x => x.Product.Name.ToLower().Contains(filter));
         }
 
-        if (!string.IsNullOrEmpty(request.Request.FilterShelfNumber))
-        {
-            var filter = request.Request.FilterShelfNumber.ToLower();
-            baseQuery = baseQuery.Where(x => x.ShelfNumber != null && x.ShelfNumber.ToLower().Contains(filter));
-        }
 
         var pricesRepo = _unitOfWork.Repository<ProductPrice>();
 
@@ -112,9 +104,6 @@ public class GetStockReportHandler : IRequestHandler<GetStockReportQuery, StockR
                 case "incomingStock":
                     baseQuery = isAsc ? baseQuery.OrderBy(i => i.IncomingStock) : baseQuery.OrderByDescending(i => i.IncomingStock);
                     break;
-                case "shelfNumber":
-                    baseQuery = isAsc ? baseQuery.OrderBy(i => i.ShelfNumber) : baseQuery.OrderByDescending(i => i.ShelfNumber);
-                    break;
                 default:
                     baseQuery = baseQuery.OrderBy(i => i.Product.Sku);
                     break;
@@ -140,12 +129,6 @@ public class GetStockReportHandler : IRequestHandler<GetStockReportQuery, StockR
                 Brand = x.Product.Brand != null ? x.Product.Brand.Name : string.Empty,
                 Picture = $"https://cdn.arikantime.com/ProductImages/{x.Product.Sku}.jpg",
                 SpecialNote = x.Product.Notes.OrderByDescending(n => n.CreatedAt).Select(n => n.Content).FirstOrDefault(),
-                ShelfNumber = x.ShelfNumber,
-                RetailSalesPrice = pricesRepo.AsQueryable()
-                    .Where(pp => pp.ProductId == x.Product.Id && pp.IsActive)
-                    .OrderByDescending(pp => pp.ValidFrom)
-                    .Select(pp => pp.UnitPrice)
-                    .FirstOrDefault(),
                 Attributes = x.Product.Attributes
             }).ToListAsync(cancellationToken);
 
@@ -177,7 +160,8 @@ public class GetStockReportHandler : IRequestHandler<GetStockReportQuery, StockR
         var fallbackSales = await _unitOfWork.Repository<OrderItem, long>().AsQueryable()
             .Include(x => x.Product)
             .Include(x => x.Order)
-            .Where(x => productIds.Contains(x.ProductId) && x.Order.Status == OrderStatus.Shipped)
+            .Where(x => productIds.Contains(x.ProductId) && 
+                        (x.Order.Status == OrderStatus.Shipped || x.Order.Status == OrderStatus.PackedAndWaitingShipment))
             .OrderByDescending(x => x.Order.ShippedAt ?? x.Order.OrderedAt)
             .ToListAsync(cancellationToken);
 
@@ -187,8 +171,7 @@ public class GetStockReportHandler : IRequestHandler<GetStockReportQuery, StockR
             .Where(x => productIds.Contains(x.ProductId)
                         && (x.Order.Status == OrderStatus.Pending
                             || x.Order.Status == OrderStatus.Approved
-                            || x.Order.Status == OrderStatus.PreOrder
-                            || x.Order.Status == OrderStatus.PackedAndWaitingShipment))
+                            || x.Order.Status == OrderStatus.PreOrder))
             .OrderByDescending(x => x.Order.OrderedAt)
             .ToListAsync(cancellationToken);
 
@@ -213,11 +196,13 @@ public class GetStockReportHandler : IRequestHandler<GetStockReportQuery, StockR
                         OccurredAt = x.StockAdjustment.AdjustmentDate,
                         Quantity = x.NewQuantity - x.OldQuantity,
                         MovementType = isPurchaseReceive ? StockMovementType.PurchaseReceive.ToString() : StockMovementType.Adjustment.ToString(),
-                        MovementGroup = isPurchaseReceive ? "Stock Details" : "Adjustment",
+                        MovementGroup = "Stock Details",
                         SourceDocumentType = "StockAdjustment",
                         ReferenceNo = isPurchaseReceive ? x.ReceivingNumber : x.StockAdjustmentId.ToString(),
                         WarehouseId = x.WarehouseId,
-                        SupplierName = x.SupplierName
+                        SupplierName = x.SupplierName,
+                        Price = x.Price,
+                        Currency = x.Currency
                     };
                 }));
 
@@ -260,7 +245,7 @@ public class GetStockReportHandler : IRequestHandler<GetStockReportQuery, StockR
                     ShelfNumber = item.ShelfNumber,
                     Quantity = item.Stock,
                     MovementType = StockMovementType.Adjustment.ToString(),
-                    MovementGroup = "Adjustment",
+                    MovementGroup = "Stock Details",
                     SourceDocumentType = "InventorySnapshot"
                 });
             }
@@ -294,8 +279,7 @@ public class GetStockReportHandler : IRequestHandler<GetStockReportQuery, StockR
     {
         return movementType switch
         {
-            StockMovementType.Adjustment => "Adjustment",
-            StockMovementType.PurchaseReceive or StockMovementType.Sale or StockMovementType.SaleRevert => "Stock Details",
+            StockMovementType.Adjustment or StockMovementType.PurchaseReceive or StockMovementType.Sale or StockMovementType.SaleRevert => "Stock Details",
             StockMovementType.Reserve or StockMovementType.Unreserve => "Status",
             _ => "Status"
         };

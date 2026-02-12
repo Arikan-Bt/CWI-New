@@ -11,7 +11,7 @@ public class DashboardViewModel
 public class DashboardWidgetDto
 {
     public string Id { get; set; } = string.Empty;
-    public string Type { get; set; } = string.Empty; // e.g., "StatCard", "Chart", "Table", "Banner"
+    public string Type { get; set; } = string.Empty; // e.g., "StatCard", "Chart", "Table", "Banner", "CompositeKpi"
     public string Title { get; set; } = string.Empty;
     public int Width { get; set; } = 12; // Bootstrap col-width (1-12)
     public int Height { get; set; } = 1; // Row span height
@@ -39,4 +39,24 @@ public class TableData
 {
     public List<string> Headers { get; set; } = new();
     public List<List<string>> Rows { get; set; } = new();
+}
+
+public class CompositeKpiData
+{
+    public List<CompositeKpiSection> Sections { get; set; } = new();
+}
+
+public class CompositeKpiSection
+{
+    public string Title { get; set; } = string.Empty;
+    public List<CompositeKpiItem> Items { get; set; } = new();
+}
+
+public class CompositeKpiItem
+{
+    public string Label { get; set; } = string.Empty;
+    public string Value { get; set; } = string.Empty;
+    public string Icon { get; set; } = string.Empty;
+    public string Trend { get; set; } = string.Empty;
+    public string TrendDirection { get; set; } = "Neutral";
 }

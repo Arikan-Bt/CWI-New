@@ -1,4 +1,4 @@
-import {
+﻿import {
   Component,
   ChangeDetectionStrategy,
   signal,
@@ -55,6 +55,7 @@ import { environment } from '../../../../environments/environment';
 import { InventoryService, ProductStockStatusDto } from '../../../core/services/inventory.service';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.constants';
+import { ImageService } from '../../../core/services/image.service';
 
 @Component({
   selector: 'app-sales-detail',
@@ -91,12 +92,12 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
   template: `
     <div class="orders-report-page">
       <div class="flex flex-col gap-4">
-        <!-- Üst Panel: Filtreler -->
+        <!-- Ãœst Panel: Filtreler -->
         <div class="card">
           <div class="font-semibold text-xl mb-4">Sales Detail</div>
           <p-fluid>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <!-- Başlangıç Tarihi -->
+              <!-- BaÅŸlangÄ±Ã§ Tarihi -->
               <div class="flex flex-col gap-2">
                 <label for="startDate" class="font-medium text-sm text-surface-600"
                   >Start of Day</label
@@ -110,7 +111,7 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
                 ></p-datepicker>
               </div>
 
-              <!-- Bitiş Tarihi -->
+              <!-- BitiÅŸ Tarihi -->
               <div class="flex flex-col gap-2">
                 <label for="endDate" class="font-medium text-sm text-surface-600">End of Day</label>
                 <p-datepicker
@@ -122,7 +123,7 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
                 ></p-datepicker>
               </div>
 
-              <!-- Sipariş Durumu -->
+              <!-- SipariÅŸ Durumu -->
               <div class="flex flex-col gap-2">
                 <label for="orderStatus" class="font-medium text-sm text-surface-600"
                   >Order Status</label
@@ -190,7 +191,7 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
           </p-fluid>
         </div>
 
-        <!-- Alt Panel: Sonuçlar -->
+        <!-- Alt Panel: SonuÃ§lar -->
         <div class="card p-0 overflow-hidden border-surface-200 dark:border-surface-700">
           <div
             class="p-4 bg-surface-0 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700"
@@ -325,7 +326,7 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
         </div>
       </div>
 
-      <!-- Detay Modalı (Edit Formu) -->
+      <!-- Detay ModalÄ± (Edit Formu) -->
       <app-full-screen-modal [(visible)]="showDetail" [style]="{ width: '70vw' }">
         <div header class="flex items-center justify-between w-full no-print">
           <div class="text-xl font-bold text-surface-900 dark:text-surface-0">Order Details</div>
@@ -333,7 +334,7 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
 
         <div class="flex flex-col bg-surface-50 dark:bg-surface-950 p-6 min-h-[600px]">
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            <!-- Sol Sütun: Order Additional Information -->
+            <!-- Sol SÃ¼tun: Order Additional Information -->
             <div class="lg:col-span-8 flex">
               <div
                 class="card p-0 h-full flex flex-col overflow-hidden border-surface-200 dark:border-surface-700 w-full"
@@ -466,7 +467,7 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
                 </div>
               </div>
             </div>
-            <!-- Sağ Sütun: Page Total -->
+            <!-- SaÄŸ SÃ¼tun: Page Total -->
             <div class="lg:col-span-4 flex">
               <div
                 class="card p-0 h-full flex flex-col overflow-hidden border-surface-200 dark:border-surface-700 w-full"
@@ -502,6 +503,9 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
                   <div class="p-6 mt-auto flex flex-col gap-2">
                     <p-button
                       label="Proforma Invoice"
+                      [disabled]="
+                        editForm().status !== 'PreOrder' && editForm().status !== 'Approved'
+                      "
                       icon="pi pi-file"
                       severity="danger"
                       styleClass="w-full text-sm py-2"
@@ -510,6 +514,7 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
                     ></p-button>
                     <p-button
                       label="Invoice"
+                      [disabled]="editForm().status !== 'PackedAndWaitingShipment'"
                       icon="pi pi-file-pdf"
                       severity="danger"
                       styleClass="w-full text-sm py-2"
@@ -537,7 +542,7 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
             </div>
           </div>
 
-          <!-- Ürünler Bölümü (Görseldeki Tasarım) -->
+          <!-- ÃœrÃ¼nler BÃ¶lÃ¼mÃ¼ (GÃ¶rseldeki TasarÄ±m) -->
           <div class="mt-8">
             <div
               class="flex items-center justify-between bg-surface-200 dark:bg-surface-800 p-3 rounded-t-md mb-6"
@@ -573,7 +578,7 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
                   <div
                     class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-lg overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow duration-300"
                   >
-                    <!-- Ürün Başlığı -->
+                    <!-- ÃœrÃ¼n BaÅŸlÄ±ÄŸÄ± -->
                     <div class="p-3 bg-surface-50 dark:bg-surface-800/50 text-center">
                       <span
                         class="text-xs font-bold text-surface-600 dark:text-surface-300 uppercase"
@@ -582,14 +587,14 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
                       </span>
                     </div>
 
-                    <!-- Ürün Resmi ve Kod -->
+                    <!-- ÃœrÃ¼n Resmi ve Kod -->
                     <div
                       class="p-6 flex flex-col items-center gap-4 border-b border-dashed border-surface-200 dark:border-surface-700"
                     >
                       <div
                         class="w-40 h-40 flex items-center justify-center bg-white rounded-lg p-2"
                       >
-                        @if (imageErrors().has(product.productCode)) {
+                        @if (!getImageUrl(product)) {
                           <div
                             class="flex flex-col items-center justify-center text-surface-400 dark:text-surface-600 gap-2"
                           >
@@ -600,12 +605,10 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
                           </div>
                         } @else {
                           <img
-                            [src]="
-                              environment.cdnUrl + '/ProductImages/' + product.productCode + '.jpg'
-                            "
+                            [src]="getImageUrl(product)"
                             [alt]="product.productName"
-                            class="max-w-full max-h-full object-contain"
-                            (error)="onImageError(product.productCode)"
+                            class="max-w-full max-h-full object-contain mix-blend-multiply dark:mix-blend-normal"
+                            (error)="onImageError(product)"
                           />
                         }
                       </div>
@@ -614,7 +617,7 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
                       }}</span>
                     </div>
 
-                    <!-- Ürün Form Alanları -->
+                    <!-- ÃœrÃ¼n Form AlanlarÄ± -->
                     <div class="p-5 flex flex-col gap-4">
                       <div class="flex flex-col gap-1.5">
                         <label class="text-[10px] font-bold text-surface-400 uppercase"
@@ -767,7 +770,7 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
       ></app-order-master-form-print>
     </div>
 
-    <!-- Ürün Seçme Modalı -->
+    <!-- ÃœrÃ¼n SeÃ§me ModalÄ± -->
     <p-dialog
       header="Select Product to Add"
       [(visible)]="showProductSelector"
@@ -821,7 +824,7 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
                 </div>
                 <div class="p-4 flex flex-col items-center gap-3">
                   <div class="w-32 h-32 flex items-center justify-center bg-white rounded-lg">
-                    @if (imageErrors().has(product.sku)) {
+                    @if (!getImageUrl(product)) {
                       <div
                         class="flex flex-col items-center justify-center text-surface-400 dark:text-surface-600 gap-2"
                       >
@@ -832,10 +835,10 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
                       </div>
                     } @else {
                       <img
-                        [src]="environment.cdnUrl + '/ProductImages/' + product.sku + '.jpg'"
+                        [src]="getImageUrl(product)"
                         [alt]="product.name"
-                        class="max-w-full max-h-full object-contain"
-                        (error)="onImageError(product.sku)"
+                        class="max-w-full max-h-full object-contain mix-blend-multiply dark:mix-blend-normal"
+                        (error)="onImageError(product)"
                       />
                     }
                   </div>
@@ -1176,8 +1179,8 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
         }
 
         @media print {
-          /* Üst katmandaki window.print artık kullanılmıyor, iframe üzerinden çıktı alıyoruz. */
-          /* Ancak genel bir önlem olarak burada stilleri sadeleştirelim. */
+          /* Ãœst katmandaki window.print artÄ±k kullanÄ±lmÄ±yor, iframe Ã¼zerinden Ã§Ä±ktÄ± alÄ±yoruz. */
+          /* Ancak genel bir Ã¶nlem olarak burada stilleri sadeleÅŸtirelim. */
           body * {
             display: none !important;
           }
@@ -1194,13 +1197,14 @@ export class SalesDetail implements OnInit {
   private reportService = inject(ReportService);
   private productService = inject(ProductService);
   private inventoryService = inject(InventoryService);
+  private imageService = inject(ImageService);
 
   loading = signal(false);
   rows = signal(10);
   searchValue = signal('');
   totalRecords = signal(0);
 
-  // Ürün Seçimi Sinyalleri
+  // ÃœrÃ¼n SeÃ§imi Sinyalleri
   showProductSelector = signal(false);
   availableProducts = signal<ProductDto[]>([]);
   productSelectorLoading = signal(false);
@@ -1217,12 +1221,12 @@ export class SalesDetail implements OnInit {
     endDate: null as any,
   });
 
-  // Stok kontrolü ve Warehouse seçimi
+  // Stok kontrolÃ¼ ve Warehouse seÃ§imi
   showWarehouseSelector = signal(false);
   stockStatusList = signal<ProductStockStatusDto[]>([]);
   warehouseSelections = signal<Record<string, number>>({});
 
-  // Seçenekler
+  // SeÃ§enekler
 
   statusOptions = signal<{ label: string; value: string }[]>([]);
   shipmentOptions = signal<{ label: string; value: string }[]>([
@@ -1231,7 +1235,7 @@ export class SalesDetail implements OnInit {
     { label: 'CIF', value: 'CIF' },
   ]);
 
-  // Edit Status seçenekleri (Load All hariç)
+  // Edit Status seÃ§enekleri (Load All hariÃ§)
   editStatusOptions = computed(() => {
     return this.statusOptions().filter((opt) => opt.value !== null && opt.value !== undefined);
   });
@@ -1248,10 +1252,10 @@ export class SalesDetail implements OnInit {
   });
 
   /**
-   * Form alanlarını günceller ve sinyali tetikler.
-   * Bu sayede computed alanların (editTotals gibi) yeniden hesaplanması sağlanır.
-   * @param key Güncellenecek alanın adı
-   * @param value Yeni değer
+   * Form alanlarÄ±nÄ± gÃ¼nceller ve sinyali tetikler.
+   * Bu sayede computed alanlarÄ±n (editTotals gibi) yeniden hesaplanmasÄ± saÄŸlanÄ±r.
+   * @param key GÃ¼ncellenecek alanÄ±n adÄ±
+   * @param value Yeni deÄŸer
    */
   updateFormField(key: keyof UpdateOrderRequest, value: any) {
     this.editForm.update((prev) => ({
@@ -1300,11 +1304,11 @@ export class SalesDetail implements OnInit {
     return [
       { label: 'Load All', value: null as any },
       { label: 'Pre Order', value: 'PreOrder' },
+      { label: 'Order', value: 'Approved' },
       { label: 'Pending', value: 'Pending' },
       { label: 'Packed & Waiting Shipment', value: 'PackedAndWaitingShipment' },
       { label: 'Shipped', value: 'Shipped' },
       { label: 'Canceled', value: 'Canceled' },
-      { label: 'Draft', value: 'Draft' },
     ];
   }
 
@@ -1329,7 +1333,7 @@ export class SalesDetail implements OnInit {
 
       this.statusOptions.set(this.getDefaultStatusOptions() as { label: string; value: string }[]);
     });
-    // shipmentOptions art�k statik (g�rsele g�re)
+    // shipmentOptions artık statik (görsele göre)
   }
 
   private ensureStatusOptionsLoaded() {
@@ -1350,20 +1354,20 @@ export class SalesDetail implements OnInit {
   brands = signal<string[]>([]);
   selectedBrand = signal('');
 
-  // Filtrelenmiş rapor verisi
+  // FiltrelenmiÅŸ rapor verisi
   filteredReportData = computed(() => {
     const brand = this.selectedBrand();
     return this.reportData().filter((item) => item.brand === brand);
   });
 
   /**
-   * Sayfada görünen (filtrelenmiş ve sayfalanmış) verilerin toplamını hesaplar.
-   * @param table PrimeNG Table referansı
+   * Sayfada gÃ¶rÃ¼nen (filtrelenmiÅŸ ve sayfalanmÄ±ÅŸ) verilerin toplamÄ±nÄ± hesaplar.
+   * @param table PrimeNG Table referansÄ±
    */
   calculatePageTotals(table: any) {
     if (!table || !table.value) return { qty: 0, amount: 0 };
 
-    // Eğer paginator varsa, o anki sayfanın verilerini al (first ve rows kullanarak)
+    // EÄŸer paginator varsa, o anki sayfanÄ±n verilerini al (first ve rows kullanarak)
     const data = table.filteredValue || table.value;
     const first = table.first || 0;
     const rows = table.rows || 0;
@@ -1383,7 +1387,9 @@ export class SalesDetail implements OnInit {
   detailTotalCount = signal(0);
   detailLoading = signal(false);
   selectedOrder = signal<OrderReportItem | null>(null);
-  detailData = signal<OrderDetailItem[]>([]);
+  detailData = signal<
+    (OrderDetailItem & { imageFallback?: number; sku?: string; imageUrl?: string })[]
+  >([]);
   printData = signal<OrderDetailItem[]>([]);
   removedItems = signal<OrderDetailItem[]>([]);
   originalProductStates = signal<Record<string, string>>({});
@@ -1391,18 +1397,45 @@ export class SalesDetail implements OnInit {
 
   /**
    * Görsel yükleme hatası durumunda tetiklenir
-   * @param code Ürün kodu veya SKU
+   * @param item Ürün nesnesi
    */
-  onImageError(code: string) {
-    this.imageErrors.update((prev) => {
-      const next = new Set(prev);
-      next.add(code);
-      return next;
-    });
+  onImageError(item: any) {
+    if (typeof item.imageFallback === 'undefined') {
+      item.imageFallback = 0;
+    }
+
+    // Level 0: System -> Level 1: CDN -> Level 2: Failed
+    if (item.imageFallback >= 2) {
+      this.imageErrors.update((prev) => {
+        const next = new Set(prev);
+        const key = item.sku || item.productCode;
+        if (key) next.add(key);
+        return next;
+      });
+      return;
+    }
+
+    item.imageFallback = (item.imageFallback || 0) + 1;
+
+    // Force update for signals to pick up change in nested property
+    if (this.availableProducts().includes(item)) {
+      this.availableProducts.update((curr) => [...curr]);
+    } else if (this.detailData().includes(item)) {
+      this.detailData.update((curr) => [...curr]);
+    }
+  }
+
+  getImageUrl(item: any): string {
+    const product = {
+      sku: item.sku || item.productCode,
+      imageUrl: item.imageUrl,
+      imageFallback: item.imageFallback,
+    };
+    return this.imageService.getImageUrl(product);
   }
 
   /**
-   * Sipariş detaylarını sayfalama ile getirir
+   * SipariÅŸ detaylarÄ±nÄ± sayfalama ile getirir
    */
   loadOrderDetails() {
     const order = this.selectedOrder();
@@ -1420,13 +1453,13 @@ export class SalesDetail implements OnInit {
     this.reportService.getOrderDetails(request).subscribe({
       next: (res) => {
         if (res.success && res.data) {
-          // Silinmiş ürünleri filtrele
+          // SilinmiÅŸ Ã¼rÃ¼nleri filtrele
           const filtered = res.data.data.filter(
             (item) => !this.removedItems().some((r) => r.productCode === item.productCode),
           );
           this.detailData.set(filtered);
 
-          // Orijinal hallerini kaydet (Değişiklik takibi için)
+          // Orijinal hallerini kaydet (DeÄŸiÅŸiklik takibi iÃ§in)
           const states: Record<string, string> = {};
           res.data.data.forEach((item) => {
             states[item.productCode] = JSON.stringify({
@@ -1437,8 +1470,8 @@ export class SalesDetail implements OnInit {
           });
           this.originalProductStates.set(states);
 
-          // Toplam sayıdan silinenleri (sadece bu sayfada olanları değil, tüm listedekileri) düşmek yanıltıcı olabilir.
-          // Ama basitlik adına ve UI tutarlılığı için:
+          // Toplam sayÄ±dan silinenleri (sadece bu sayfada olanlarÄ± deÄŸil, tÃ¼m listedekileri) dÃ¼ÅŸmek yanÄ±ltÄ±cÄ± olabilir.
+          // Ama basitlik adÄ±na ve UI tutarlÄ±lÄ±ÄŸÄ± iÃ§in:
           this.detailTotalCount.set(Math.max(0, res.data.totalCount - this.removedItems().length));
         }
         this.detailLoading.set(false);
@@ -1455,7 +1488,7 @@ export class SalesDetail implements OnInit {
   }
 
   /**
-   * Sayfa değiştiğinde tetiklenir
+   * Sayfa deÄŸiÅŸtiÄŸinde tetiklenir
    */
   onDetailPageChange(event: any) {
     this.detailPage.set(event.page);
@@ -1464,8 +1497,8 @@ export class SalesDetail implements OnInit {
   }
 
   /**
-   * Seçilen çeyrek döneme göre tarih filtrelerini ayarlar (1-3, 4-6, 7-9, 10-12 aylar).
-   * @param quarter Çeyrek dönem numarası (1, 2, 3 veya 4)
+   * SeÃ§ilen Ã§eyrek dÃ¶neme gÃ¶re tarih filtrelerini ayarlar (1-3, 4-6, 7-9, 10-12 aylar).
+   * @param quarter Ã‡eyrek dÃ¶nem numarasÄ± (1, 2, 3 veya 4)
    */
   setQuarterFilters(quarter: number) {
     const year = new Date().getFullYear();
@@ -1609,7 +1642,7 @@ export class SalesDetail implements OnInit {
     });
   }
 
-  // Detay görüntüle (Edit Modu)
+  // Detay gÃ¶rÃ¼ntÃ¼le (Edit Modu)
   onViewDetail(item: OrderReportItem) {
     this.ensureStatusOptionsLoaded();
     this.selectedOrder.set(item);
@@ -1630,10 +1663,10 @@ export class SalesDetail implements OnInit {
 
     this.showDetail.set(true);
 
-    // Silinenleri sıfırla
+    // Silinenleri sÄ±fÄ±rla
     this.removedItems.set([]);
 
-    // Sayfalamayı sıfırla ve detayları çek
+    // SayfalamayÄ± sÄ±fÄ±rla ve detaylarÄ± Ã§ek
     this.detailPage.set(0);
     this.showPrintPreview.set(false);
     this.loadOrderDetails();
@@ -1643,7 +1676,19 @@ export class SalesDetail implements OnInit {
     const request = this.editForm();
     if (!request.orderId) return;
 
-    // Eğer statü stok kontrolü gerektiriyorsa (örn: PackedAndWaitingShipment) stok kontrolü yap
+    if (request.status === 'PackedAndWaitingShipment') {
+      if (!request.shipmentMethod || !request.requestedShipmentDate) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Validation Error',
+          detail:
+            'Shipment Method and Requested Shipment Date are required for Packed & Waiting Shipment status.',
+        });
+        return;
+      }
+    }
+
+    // EÄŸer statÃ¼ stok kontrolÃ¼ gerektiriyorsa (Ã¶rn: PackedAndWaitingShipment) stok kontrolÃ¼ yap
     if (STOCK_CHECK_TRIGGER_STATUSES.includes(request.status || '')) {
       this.saving.set(true);
       this.inventoryService.checkOrderStock(request.orderId).subscribe({
@@ -1652,15 +1697,15 @@ export class SalesDetail implements OnInit {
             const stockList = res.data;
             this.stockStatusList.set(stockList);
 
-            // Birden fazla deposu olan ürün var mı kontrol et
+            // Birden fazla deposu olan Ã¼rÃ¼n var mÄ± kontrol et
             const productsWithMultipleWarehouses = stockList.filter((p) => p.hasMultipleWarehouses);
 
             if (productsWithMultipleWarehouses.length > 0) {
-              // Varsayılan seçimleri hazırla (en çok stok olanı seç)
+              // VarsayÄ±lan seÃ§imleri hazÄ±rla (en Ã§ok stok olanÄ± seÃ§)
               const selections: Record<string, number> = {};
               stockList.forEach((p) => {
                 if (p.warehouses.length > 0) {
-                  // Varsayılan olarak ilkini (en çok stok olan, query'de sort ettik) seç
+                  // VarsayÄ±lan olarak ilkini (en Ã§ok stok olan, query'de sort ettik) seÃ§
                   selections[p.productCode] = p.warehouses[0].warehouseId;
                 }
               });
@@ -1671,10 +1716,10 @@ export class SalesDetail implements OnInit {
               return;
             }
 
-            // Otomatik seçim yap (tek seçenek varsa)
+            // Otomatik seÃ§im yap (tek seÃ§enek varsa)
             const selections: OrderWarehouseSelectionDto[] = [];
             stockList.forEach((p) => {
-              // Eğer sadece bir depo varsa onu ekle, yoksa (stok yoksa) ekleme
+              // EÄŸer sadece bir depo varsa onu ekle, yoksa (stok yoksa) ekleme
               if (p.warehouses.length === 1) {
                 selections.push({
                   productCode: p.productCode,
@@ -1705,7 +1750,7 @@ export class SalesDetail implements OnInit {
       return;
     }
 
-    // Diğer durumlarda direkt kaydet
+    // DiÄŸer durumlarda direkt kaydet
     this.processUpdateOrder([]);
   }
 
@@ -1723,7 +1768,7 @@ export class SalesDetail implements OnInit {
     this.saving.set(true);
     const normalizedStatus = this.normalizeStatusValue(request.status || '');
 
-    // Tarihi ISO formatına çevir ve silinenleri ekle
+    // Tarihi ISO formatÄ±na Ã§evir ve silinenleri ekle
     const formattedRequest: UpdateOrderRequest = {
       ...request,
       status: normalizedStatus,
@@ -1765,10 +1810,10 @@ export class SalesDetail implements OnInit {
     });
   }
 
-  // --- Ürün Ekleme/Güncelleme/Silme İşlemleri ---
+  // --- ÃœrÃ¼n Ekleme/GÃ¼ncelleme/Silme Ä°ÅŸlemleri ---
 
   /**
-   * Ürün seçici modalını açar
+   * ÃœrÃ¼n seÃ§ici modalÄ±nÄ± aÃ§ar
    */
   onAddNewProduct() {
     this.showProductSelector.set(true);
@@ -1777,7 +1822,7 @@ export class SalesDetail implements OnInit {
   }
 
   /**
-   * Seçilebilir ürünleri API'den getirir
+   * SeÃ§ilebilir Ã¼rÃ¼nleri API'den getirir
    */
   loadAvailableProducts() {
     this.productSelectorLoading.set(true);
@@ -1805,7 +1850,7 @@ export class SalesDetail implements OnInit {
   }
 
   /**
-   * Ürün arama değiştiğinde
+   * ÃœrÃ¼n arama deÄŸiÅŸtiÄŸinde
    */
   onProductSearch() {
     this.productSelectorPage.set(0);
@@ -1813,13 +1858,13 @@ export class SalesDetail implements OnInit {
   }
 
   /**
-   * Ürün seçildiğinde listeye ekle (Frontend tarafında)
+   * ÃœrÃ¼n seÃ§ildiÄŸinde listeye ekle (Frontend tarafÄ±nda)
    */
   onSelectProduct(product: ProductDto) {
     const order = this.selectedOrder();
     if (!order) return;
 
-    // Zaten varsa uyarı ver veya ekleme
+    // Zaten varsa uyarÄ± ver veya ekleme
     if (this.detailData().some((d) => d.productCode === product.sku)) {
       this.messageService.add({
         severity: 'warn',
@@ -1844,7 +1889,7 @@ export class SalesDetail implements OnInit {
   }
 
   /**
-   * Tek bir ürün kalemini veri tabanına kaydeder
+   * Tek bir Ã¼rÃ¼n kalemini veri tabanÄ±na kaydeder
    */
   onSaveProduct(item: OrderDetailItem) {
     const order = this.selectedOrder();
@@ -1867,7 +1912,7 @@ export class SalesDetail implements OnInit {
             detail: `Product ${item.productCode} saved.`,
           });
 
-          // Orijinal hali güncelle ki Save butonu tekrar pasif olsun
+          // Orijinal hali gÃ¼ncelle ki Save butonu tekrar pasif olsun
           this.originalProductStates.update((prev) => ({
             ...prev,
             [item.productCode]: JSON.stringify({
@@ -1877,8 +1922,8 @@ export class SalesDetail implements OnInit {
             }),
           }));
 
-          // this.loadOrderDetails(); // Artık listeyi tamamen yenilemeye gerek olmayabilir, durumu güncelledik
-          this.onReport(); // Ana listeyi de yenile (toplamlar için)
+          // this.loadOrderDetails(); // ArtÄ±k listeyi tamamen yenilemeye gerek olmayabilir, durumu gÃ¼ncelledik
+          this.onReport(); // Ana listeyi de yenile (toplamlar iÃ§in)
         } else {
           this.messageService.add({
             severity: 'error',
@@ -1898,13 +1943,13 @@ export class SalesDetail implements OnInit {
   }
 
   /**
-   * Ürünü listeden (ve veri tabanından) çıkarır
+   * ÃœrÃ¼nÃ¼ listeden (ve veri tabanÄ±ndan) Ã§Ä±karÄ±r
    */
   onRemoveProduct(item: OrderDetailItem) {
-    // Veritabanından hemen silme, local listeye ekle
+    // VeritabanÄ±ndan hemen silme, local listeye ekle
     this.removedItems.update((prev) => [...prev, item]);
 
-    // Mevcut görünümden kaldır
+    // Mevcut gÃ¶rÃ¼nÃ¼mden kaldÄ±r
     this.detailData.update((items) => items.filter((p) => p.productCode !== item.productCode));
     this.detailTotalCount.update((count) => Math.max(0, count - 1));
 
@@ -1922,7 +1967,7 @@ export class SalesDetail implements OnInit {
   }
 
   /**
-   * Ürün bilgilerinde değişiklik olup olmadığını kontrol eder
+   * ÃœrÃ¼n bilgilerinde deÄŸiÅŸiklik olup olmadÄ±ÄŸÄ±nÄ± kontrol eder
    */
   isProductChanged(product: OrderDetailItem): boolean {
     const originalState = this.originalProductStates()[product.productCode];
@@ -1938,26 +1983,26 @@ export class SalesDetail implements OnInit {
   }
 
   /**
-   * Ürün değerini günceller ve detailData signal'ini yeniden tetikler
-   * Bu sayede editTotals computed değeri otomatik yeniden hesaplanır
-   * @param product Güncellenecek ürün
-   * @param field Güncellenecek alan (qty veya amount)
-   * @param value Yeni değer
+   * ÃœrÃ¼n deÄŸerini gÃ¼nceller ve detailData signal'ini yeniden tetikler
+   * Bu sayede editTotals computed deÄŸeri otomatik yeniden hesaplanÄ±r
+   * @param product GÃ¼ncellenecek Ã¼rÃ¼n
+   * @param field GÃ¼ncellenecek alan (qty veya amount)
+   * @param value Yeni deÄŸer
    */
   onProductValueChange(product: OrderDetailItem, field: 'qty' | 'amount', value: number) {
     product[field] = value;
-    // Signal'i yeniden tetiklemek için array'i yeniden oluştur
+    // Signal'i yeniden tetiklemek iÃ§in array'i yeniden oluÅŸtur
     this.detailData.update((items) => [...items]);
   }
 
   /**
-   * Ürün miktarını artırır veya azaltır ve detailData signal'ini yeniden tetikler
-   * @param product Güncellenecek ürün
-   * @param delta Değişim miktarı (-1 veya +1)
+   * ÃœrÃ¼n miktarÄ±nÄ± artÄ±rÄ±r veya azaltÄ±r ve detailData signal'ini yeniden tetikler
+   * @param product GÃ¼ncellenecek Ã¼rÃ¼n
+   * @param delta DeÄŸiÅŸim miktarÄ± (-1 veya +1)
    */
   onProductQtyChange(product: OrderDetailItem, delta: number) {
     product.qty = Math.max(0, product.qty + delta);
-    // Signal'i yeniden tetiklemek için array'i yeniden oluştur
+    // Signal'i yeniden tetiklemek iÃ§in array'i yeniden oluÅŸtur
     this.detailData.update((items) => [...items]);
   }
 
@@ -1990,12 +2035,12 @@ export class SalesDetail implements OnInit {
 
   showPrintPreview = signal(false);
   printLoading = signal(false);
-  // Proforma Invoice indirme yükleniyor durumu
+  // Proforma Invoice indirme yÃ¼kleniyor durumu
   proformaLoading = signal(false);
   invoiceLoading = signal(false);
 
   /**
-   * Seçili sipariş için Invoice Excel dosyasını indirir
+   * SeÃ§ili sipariÅŸ iÃ§in Invoice Excel dosyasÄ±nÄ± indirir
    */
   onInvoice() {
     const order = this.selectedOrder();
@@ -2030,7 +2075,7 @@ export class SalesDetail implements OnInit {
   }
 
   /**
-   * Seçili sipariş için Proforma Invoice Excel dosyasını indirir
+   * SeÃ§ili sipariÅŸ iÃ§in Proforma Invoice Excel dosyasÄ±nÄ± indirir
    */
   onProformaInvoice() {
     const order = this.selectedOrder();
@@ -2069,30 +2114,30 @@ export class SalesDetail implements OnInit {
     if (!order) return;
 
     this.printLoading.set(true);
-    // Tüm ürünleri çekmek için yüksek bir limit kullanalım
+    // TÃ¼m Ã¼rÃ¼nleri Ã§ekmek iÃ§in yÃ¼ksek bir limit kullanalÄ±m
     const request: OrderDetailRequest = {
       orderId: order.orderId,
       brand: order.brand,
       pageNumber: 1,
-      pageSize: 1000, // Tüm ürünleri kapsayacak şekilde
+      pageSize: 1000, // TÃ¼m Ã¼rÃ¼nleri kapsayacak ÅŸekilde
     };
 
     this.reportService.getOrderDetails(request).subscribe({
       next: (res) => {
         if (res.success && res.data) {
-          // 1. API'den gelenlerden silinmişleri çıkar
+          // 1. API'den gelenlerden silinmiÅŸleri Ã§Ä±kar
           let allItems = res.data.data.filter(
             (item: any) => !this.removedItems().some((r) => r.productCode === item.productCode),
           );
 
-          // 2. Localde eklenmiş ama henüz kaydedilmemiş (id: 0) olanları ekle
+          // 2. Localde eklenmiÅŸ ama henÃ¼z kaydedilmemiÅŸ (id: 0) olanlarÄ± ekle
           const localAdds = this.detailData().filter(
             (d) => d.id === 0 && !allItems.some((a: any) => a.productCode === d.productCode),
           );
 
           this.printData.set([...localAdds, ...allItems]);
           this.printLoading.set(false);
-          // DOM'un güncellenmesi için çok kısa bir süre bekleyip yazdır
+          // DOM'un gÃ¼ncellenmesi iÃ§in Ã§ok kÄ±sa bir sÃ¼re bekleyip yazdÄ±r
           setTimeout(() => this.onActualPrint(), 50);
         } else {
           this.printLoading.set(false);
@@ -2171,7 +2216,7 @@ export class SalesDetail implements OnInit {
               }
               .no-print { display: none !important; }
               app-order-master-form-print { display: block; width: 100%; }
-              /* Iframe içinde görsellerin yüklendiğinden emin olmak için ek stil */
+              /* Iframe iÃ§inde gÃ¶rsellerin yÃ¼klendiÄŸinden emin olmak iÃ§in ek stil */
               img { max-width: 100%; height: auto; }
             </style>
           </head>
@@ -2300,5 +2345,3 @@ export class SalesDetail implements OnInit {
     });
   }
 }
-
-

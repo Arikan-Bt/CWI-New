@@ -114,6 +114,11 @@ public class Order : AuditableLongEntity, IUserAuditableEntity
     /// Para birimi Id (FK)
     /// </summary>
     public int CurrencyId { get; set; }
+
+    /// <summary>
+    /// Sezon bilgisi
+    /// </summary>
+    public string? Season { get; set; }
     
     // Navigation Properties
     

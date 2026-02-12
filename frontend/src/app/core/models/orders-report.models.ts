@@ -55,6 +55,7 @@ export interface OrderReportItem {
   orderDescription?: string;
   subTotal: number;
   grandTotal: number;
+  season?: string;
 }
 
 /**

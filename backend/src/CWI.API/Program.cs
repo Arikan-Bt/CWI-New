@@ -88,6 +88,7 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
     };
 });
+builder.Services.AddAuthorization();
 
 // Application ve Infrastructure katmanlarını ekle
 builder.Services.AddApplication();

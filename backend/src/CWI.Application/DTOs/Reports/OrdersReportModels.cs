@@ -44,6 +44,7 @@ public class OrderReportDto
     public string? OrderDescription { get; set; }
     public decimal SubTotal { get; set; }
     public decimal GrandTotal { get; set; }
+    public string? Season { get; set; }
 }
 
 /// <summary>

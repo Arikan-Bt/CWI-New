@@ -16,5 +16,8 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.HasIndex(o => o.Status);
         builder.HasIndex(o => o.CustomerId);
         builder.HasIndex(o => o.CreatedByGroupCode);
+
+        // Kullanıcı aktiviteleri sorgusunda kullanılıyor
+        builder.HasIndex(o => o.CreatedByUsername);
     }
 }

@@ -291,6 +291,12 @@ import { getOrderStatusSeverity } from '../../../core/utils/status-utils';
                     <p-columnFilter type="text" field="brand" display="menu"></p-columnFilter>
                   </div>
                 </th>
+                <th pSortableColumn="season">
+                  <div class="flex items-center gap-2">
+                    SEASON <p-sortIcon field="season"></p-sortIcon>
+                    <p-columnFilter type="text" field="season" display="menu"></p-columnFilter>
+                  </div>
+                </th>
                 <th pSortableColumn="orderDate">
                   <div class="flex items-center gap-2">
                     ORDER DATE <p-sortIcon field="orderDate"></p-sortIcon>
@@ -328,6 +334,7 @@ import { getOrderStatusSeverity } from '../../../core/utils/status-utils';
                   <p-tag [value]="item.status" [severity]="getSeverity(item.status)"></p-tag>
                 </td>
                 <td>{{ item.brand }}</td>
+                <td>{{ item.season }}</td>
                 <td>{{ item.orderDate | date: 'dd.MM.yyyy' }}</td>
                 <td>{{ item.requestedShipmentDate | date: 'dd.MM.yyyy' }}</td>
                 <td class="text-right font-semibold">{{ item.totalQty | number }}</td>

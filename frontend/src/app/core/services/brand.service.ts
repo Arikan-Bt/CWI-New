@@ -63,6 +63,22 @@ export interface BrandTableFilters {
   filterStatus?: string;
 }
 
+export interface BrandProductDto {
+  id: number;
+  isSelected: boolean;
+  name: string;
+  sku: string;
+  brandName?: string;
+}
+
+export interface BrandProductDto {
+  id: number;
+  isSelected: boolean;
+  name: string;
+  sku: string;
+  brandName?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -134,5 +150,19 @@ export class BrandService {
    */
   deleteBrand(id: number): Observable<ApiResult<boolean>> {
     return this.http.delete<ApiResult<boolean>>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
+   * Markaya ait ürünleri getirir
+   */
+  getBrandProducts(id: number): Observable<ApiResult<BrandProductDto[]>> {
+    return this.http.get<ApiResult<BrandProductDto[]>>(`${this.apiUrl}/${id}/products`);
+  }
+
+  /**
+   * Markaya ürünleri atar
+   */
+  updateBrandProducts(id: number, productIds: number[]): Observable<ApiResult<number>> {
+    return this.http.put<ApiResult<number>>(`${this.apiUrl}/${id}/products`, productIds);
   }
 }

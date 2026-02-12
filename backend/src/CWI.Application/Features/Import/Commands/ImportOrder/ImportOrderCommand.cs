@@ -86,6 +86,7 @@ public class ImportOrderCommandHandler : IRequestHandler<ImportOrderCommand, Imp
                 var productCode = worksheet.Cells[row, 1].Value?.ToString()?.Trim();
                 var qtyStr = worksheet.Cells[row, 2].Value?.ToString();
                 var priceStr = worksheet.Cells[row, 3].Value?.ToString();
+                var season = worksheet.Cells[row, 4].Value?.ToString()?.Trim();
 
                 if (string.IsNullOrWhiteSpace(productCode) || !int.TryParse(qtyStr, out var qty) || qty <= 0)
                 {
@@ -104,6 +105,7 @@ public class ImportOrderCommandHandler : IRequestHandler<ImportOrderCommand, Imp
                     ProductCode = productCode,
                     Quantity = qty,
                     Price = ParsePrice(priceStr),
+                    Season = season
                 });
             }
 
@@ -275,6 +277,7 @@ public class ImportOrderCommandHandler : IRequestHandler<ImportOrderCommand, Imp
                 CreatedAt = DateTime.UtcNow,
                 CreatedByUsername = _currentUserService.UserName ?? "system",
                 CurrencyId = currency.Id,
+                Season = excelData.FirstOrDefault(x => !string.IsNullOrEmpty(x.Season))?.Season
             };
 
             await _unitOfWork.Repository<Order, long>().AddAsync(order, cancellationToken);
@@ -469,6 +472,7 @@ public class ImportOrderCommandHandler : IRequestHandler<ImportOrderCommand, Imp
         public string ProductCode { get; set; } = string.Empty;
         public int Quantity { get; set; }
         public decimal? Price { get; set; }
+        public string? Season { get; set; }
     }
 
     private static string NormalizeSku(string? sku)

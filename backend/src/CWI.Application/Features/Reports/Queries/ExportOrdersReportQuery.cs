@@ -106,6 +106,7 @@ public class ExportOrdersReportQuery : IRequest<byte[]>
                         PaymentType = order.ShippingInfo?.PaymentMethod,
                         ShipmentMethod = order.ShippingInfo?.ShipmentTerms,
                         OrderDescription = order.Notes,
+                        Season = order.Season,
                         SubTotal = brandTotal + brandDiscount,
                         GrandTotal = brandTotal
                     };
@@ -133,6 +134,7 @@ public class ExportOrdersReportQuery : IRequest<byte[]>
             worksheet.Cells[1, col++].Value = "Payment Type";
             worksheet.Cells[1, col++].Value = "Shipment Method";
             worksheet.Cells[1, col++].Value = "Description";
+            worksheet.Cells[1, col++].Value = "Season";
 
             // Stil
             using (var range = worksheet.Cells[1, 1, 1, col - 1])
@@ -162,6 +164,7 @@ public class ExportOrdersReportQuery : IRequest<byte[]>
                 worksheet.Cells[row, col++].Value = item.PaymentType;
                 worksheet.Cells[row, col++].Value = item.ShipmentMethod;
                 worksheet.Cells[row, col++].Value = item.OrderDescription;
+                worksheet.Cells[row, col++].Value = item.Season;
                 row++;
             }
 

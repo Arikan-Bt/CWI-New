@@ -49,8 +49,15 @@ public class GetInvoiceQueryHandler : IRequestHandler<GetInvoiceQuery, byte[]>
         if (slItems.Any())
         {
             var sheet = workbook.Worksheets.Add("Invoice 1");
-            // Prefixleri "INV" olarak güncelledik
-            AddOrderSheet(sheet, order, slItems, logoPath, "SLCL", "SLINV", settings);
+            var colPrefix = settings.GetValueOrDefault("Invoice_SL_Collection_Prefix", "SLCL");
+            var piPrefix = settings.GetValueOrDefault("Invoice_SL_No_Prefix", "SLINV");
+            var startNumStr = settings.GetValueOrDefault("Order_Sequence_Start", "3000");
+            if (!long.TryParse(startNumStr, out long startNum)) startNum = 3000;
+
+            var finalColNo = colPrefix + (startNum + order.Id);
+            var finalPiNo = piPrefix + (startNum + order.Id);
+
+            AddOrderSheet(sheet, order, slItems, logoPath, finalColNo, finalPiNo, settings);
         }
 
         // 2. Kısım: Diğer ürünler
@@ -59,8 +66,54 @@ public class GetInvoiceQueryHandler : IRequestHandler<GetInvoiceQuery, byte[]>
         {
             var sheetName = slItems.Any() ? "Invoice 2" : "Invoice";
             var sheet = workbook.Worksheets.Add(sheetName);
-            // Prefixleri "INV" olarak güncelledik
-            AddOrderSheet(sheet, order, otherItems, logoPath, "BHPCINV24-", "BHPCINV24-", settings);
+            
+            // --- Tekil Numara Atama Mantığı ---
+            // Bu sipariş için daha önce bir numara atanmış mı kontrol edelim
+            var assignedNoKey = $"Assigned_No_{order.Id}";
+            var assignedSetting = await _unitOfWork.Repository<LocalizedString>().AsQueryableTracking()
+                .FirstOrDefaultAsync(x => x.Key == assignedNoKey && x.Module == "AssignedOrders", cancellationToken);
+
+            string finalNumber;
+
+            if (assignedSetting != null)
+            {
+                // Zaten atanmış, aynı numarayı kullanalım
+                finalNumber = assignedSetting.Value;
+            }
+            else
+            {
+                // Henüz atanmamış, yeni bir numara alalım ve sayacı artıralım
+                var formatSetting = await _unitOfWork.Repository<LocalizedString>().AsQueryableTracking()
+                    .FirstOrDefaultAsync(x => x.Key == "Order_BHPC_Format" && x.Module == "OrderSettings", cancellationToken);
+
+                finalNumber = formatSetting?.Value ?? "BHPCIN26-3000";
+
+                // Atanan numarayı bu sipariş için kaydedelim
+                await _unitOfWork.Repository<LocalizedString>().AddAsync(new LocalizedString
+                {
+                    Key = assignedNoKey,
+                    Value = finalNumber,
+                    Module = "AssignedOrders",
+                    LanguageId = 1 // Varsayılan dil
+                }, cancellationToken);
+
+                // Küresel sayacı bir sonraki sipariş için artıralım
+                if (formatSetting != null && finalNumber.Contains("-"))
+                {
+                    var lastDashIdx = finalNumber.LastIndexOf('-');
+                    var prefix = finalNumber.Substring(0, lastDashIdx + 1);
+                    var numPart = finalNumber.Substring(lastDashIdx + 1);
+                    if (long.TryParse(numPart, out long currentNum))
+                    {
+                        formatSetting.Value = prefix + (currentNum + 1);
+                    }
+                }
+                
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
+            // ----------------------------------
+
+            AddOrderSheet(sheet, order, otherItems, logoPath, finalNumber, finalNumber, settings);
         }
 
         using var memoryStream = new MemoryStream();
@@ -129,18 +182,12 @@ public class GetInvoiceQueryHandler : IRequestHandler<GetInvoiceQuery, byte[]>
             { "Footer_Note", "Your Order will not be shipped until we receive payment" }
         };
 
-        // 2. İngilizce dilini bul
-        var engLang = await _unitOfWork.Repository<Language>().AsQueryable()
-            .FirstOrDefaultAsync(l => l.Code == "en" && l.IsActive, cancellationToken);
-        
-        if (engLang == null) return settings;
-
-        // 3. Veritabanından ayarları çek (Module = 'Invoice' varsa onu, yoksa 'Proforma')
+        // 2. Veritabanından ayarları çek (Module = 'Invoice', 'Proforma' veya 'OrderSettings')
         var dbSettings = await _unitOfWork.Repository<LocalizedString>().AsQueryable()
-            .Where(x => x.LanguageId == engLang.Id && (x.Module == "Proforma" || x.Module == "Invoice"))
+            .Where(x => x.Module == "Proforma" || x.Module == "Invoice" || x.Module == "OrderSettings")
             .ToListAsync(cancellationToken);
 
-        // 4. Varsa ez
+        // 3. Varsa ez
         foreach (var item in dbSettings)
         {
             if (settings.ContainsKey(item.Key))
@@ -153,7 +200,7 @@ public class GetInvoiceQueryHandler : IRequestHandler<GetInvoiceQuery, byte[]>
     }
 
     private void AddOrderSheet(IXLWorksheet sheet, Order order, List<OrderItem> items, string logoPath, 
-                             string colPrefix, string piPrefix, Dictionary<string, string> settings)
+                             string collectionNo, string piNo, Dictionary<string, string> settings)
     {
         // Sayfa Ayarları
         sheet.PageSetup.PageOrientation = XLPageOrientation.Portrait;
@@ -216,13 +263,11 @@ public class GetInvoiceQueryHandler : IRequestHandler<GetInvoiceQuery, byte[]>
         sheet.Cell(7, 6).Style.Font.Bold = true;
         sheet.Cell(7, 7).Value = order.OrderedAt.ToString("dd/MM/yyyy");
 
-        sheet.Cell(8, 6).Value = settings["Label_Collection_No"];
-        sheet.Cell(8, 6).Style.Font.Bold = true;
-        sheet.Cell(8, 7).Value = colPrefix + (15000 + order.Id);
+        sheet.Cell(8, 7).Value = collectionNo;
 
         sheet.Cell(9, 6).Value = settings["Label_Invoice_No"]; 
         sheet.Cell(9, 6).Style.Font.Bold = true;
-        sheet.Cell(9, 7).Value = piPrefix + (15000 + order.Id);
+        sheet.Cell(9, 7).Value = piNo;
 
         // Table Header
         var headers = new[] { 

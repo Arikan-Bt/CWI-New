@@ -5,8 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Domain.Entities.Orders;
-using CWI.Domain.Entities.Identity;
 using CWI.Domain.Entities.Customers;
+using CWI.Domain.Entities.Inventory;
+using CWI.Domain.Entities.Purchasing;
 using CWI.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
@@ -58,129 +59,294 @@ public class GetDashboardQueryHandler : IRequestHandler<GetDashboardQuery, Dashb
     {
         var usCulture = new CultureInfo("en-US");
         var orderRepo = _unitOfWork.Repository<Order, long>();
-        var userRepo = _unitOfWork.Repository<User>();
-        var orderItemRepo = _unitOfWork.Repository<OrderItem, long>();
+        var transactionRepo = _unitOfWork.Repository<CustomerTransaction, long>();
+        var vendorInvoiceRepo = _unitOfWork.Repository<VendorInvoice, int>();
+        var vendorPaymentRepo = _unitOfWork.Repository<VendorPayment, long>();
+        var inventoryRepo = _unitOfWork.Repository<InventoryItem, long>();
 
-        // 1. Total Revenue
-        var revenue = await orderRepo.AsQueryable()
-            .Where(o => !o.IsCanceled)
-            .SumAsync(o => o.GrandTotal, cancellationToken);
+        var now = DateTime.UtcNow;
+        var startOfCurrentMonth = new DateTime(now.Year, now.Month, 1);
+        var lastTwelveMonthsStart = startOfCurrentMonth.AddMonths(-11);
 
-        // 2. Active Users
-        var activeUsers = await userRepo.AsQueryable()
-            .CountAsync(u => u.IsActive, cancellationToken);
-
-        // 3. Pending Orders
-        var pendingOrders = await orderRepo.AsQueryable()
-            .CountAsync(o => o.Status == OrderStatus.Pending || o.Status == OrderStatus.PreOrder, cancellationToken);
-
-        // 4. Top Selling Products
-        var topProducts = await orderItemRepo.AsQueryable()
-            .GroupBy(x => new { x.ProductId, x.ProductName })
-            .Select(g => new 
+        var yearlyRevenueMonthly = await orderRepo.AsQueryable()
+            .AsNoTracking()
+            .Where(o => !o.IsCanceled && o.OrderedAt >= lastTwelveMonthsStart)
+            .GroupBy(o => new { o.OrderedAt.Year, o.OrderedAt.Month })
+            .Select(g => new
             {
-                ProductName = g.Key.ProductName,
-                TotalRevenue = g.Sum(x => x.LineTotal),
-                Count = g.Count()
+                Year = g.Key.Year,
+                Month = g.Key.Month,
+                Total = g.Sum(o => o.GrandTotal)
             })
-            .OrderByDescending(x => x.TotalRevenue)
-            .Take(5)
             .ToListAsync(cancellationToken);
 
-        var topProductRows = topProducts.Select(p => new List<string> 
-        { 
-            p.ProductName, 
-            "General", 
-            p.TotalRevenue.ToString("C2", usCulture) 
-        }).ToList();
-
-        // 5. Monthly Sales Chart
-        var sixMonthsAgo = DateTime.Now.AddMonths(-5).Date;
-        var monthlySales = await orderRepo.AsQueryable()
-             .Where(o => o.OrderedAt >= sixMonthsAgo && !o.IsCanceled)
-             .GroupBy(o => new { o.OrderedAt.Year, o.OrderedAt.Month })
-             .Select(g => new 
-             {
-                 Year = g.Key.Year,
-                 Month = g.Key.Month,
-                 Total = g.Sum(o => o.GrandTotal)
-             })
-             .ToListAsync(cancellationToken);
-        
-        var chartLabels = new List<string>();
-        var chartValues = new List<double>();
-        for (int i = 5; i >= 0; i--)
+        var yearlyLabels = new List<string>();
+        var yearlyValues = new List<double>();
+        for (var i = 11; i >= 0; i--)
         {
-            var date = DateTime.Now.AddMonths(-i);
-            var monthData = monthlySales.FirstOrDefault(x => x.Year == date.Year && x.Month == date.Month);
-            
-            chartLabels.Add(date.ToString("MMM"));
-            chartValues.Add(monthData != null ? (double)monthData.Total : 0);
+            var date = startOfCurrentMonth.AddMonths(-i);
+            var monthData = yearlyRevenueMonthly.FirstOrDefault(x => x.Year == date.Year && x.Month == date.Month);
+            yearlyLabels.Add(date.ToString("MMM yy", CultureInfo.InvariantCulture));
+            yearlyValues.Add(monthData != null ? (double)monthData.Total : 0);
         }
+
+        var seasonalRevenue = await orderRepo.AsQueryable()
+            .AsNoTracking()
+            .Where(o => !o.IsCanceled && o.OrderedAt >= lastTwelveMonthsStart)
+            .GroupBy(o => string.IsNullOrWhiteSpace(o.Season) ? "Unspecified" : o.Season!)
+            .Select(g => new
+            {
+                Season = g.Key,
+                Total = g.Sum(o => o.GrandTotal)
+            })
+            .OrderBy(x => x.Season)
+            .ToListAsync(cancellationToken);
+
+        var twelveMonthsAgo = lastTwelveMonthsStart;
+        var monthlySales = await orderRepo.AsQueryable()
+            .AsNoTracking()
+            .Where(o => o.OrderedAt >= twelveMonthsAgo && !o.IsCanceled)
+            .GroupBy(o => new { o.OrderedAt.Year, o.OrderedAt.Month })
+            .Select(g => new
+            {
+                Year = g.Key.Year,
+                Month = g.Key.Month,
+                Total = g.Sum(o => o.GrandTotal)
+            })
+            .ToListAsync(cancellationToken);
+
+        var monthlyLabels = new List<string>();
+        var monthlyValues = new List<double>();
+        for (var i = 11; i >= 0; i--)
+        {
+            var date = startOfCurrentMonth.AddMonths(-i);
+            var monthData = monthlySales.FirstOrDefault(x => x.Year == date.Year && x.Month == date.Month);
+            monthlyLabels.Add(date.ToString("MMM yy", CultureInfo.InvariantCulture));
+            monthlyValues.Add(monthData != null ? (double)monthData.Total : 0);
+        }
+
+        var shippedQuantity = await orderRepo.AsQueryable()
+            .AsNoTracking()
+            .Where(o => !o.IsCanceled && o.Status == OrderStatus.Shipped)
+            .SumAsync(o => o.TotalQuantity, cancellationToken);
+
+        var pendingQuantity = await orderRepo.AsQueryable()
+            .AsNoTracking()
+            .Where(o => !o.IsCanceled && (
+                o.Status == OrderStatus.Pending ||
+                o.Status == OrderStatus.PreOrder ||
+                o.Status == OrderStatus.Approved))
+            .SumAsync(o => o.TotalQuantity, cancellationToken);
+
+        var waitingQuantity = await orderRepo.AsQueryable()
+            .AsNoTracking()
+            .Where(o => !o.IsCanceled && o.Status == OrderStatus.PackedAndWaitingShipment)
+            .SumAsync(o => o.TotalQuantity, cancellationToken);
+
+        var customerBalanceSummary = await transactionRepo.AsQueryable()
+            .AsNoTracking()
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                TotalDebit = g.Sum(x => x.DebitAmount),
+                TotalCredit = g.Sum(x => x.CreditAmount)
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var totalVendorInvoice = await vendorInvoiceRepo.AsQueryable()
+            .AsNoTracking()
+            .SumAsync(x => x.TotalAmount, cancellationToken);
+
+        var totalVendorPayment = await vendorPaymentRepo.AsQueryable()
+            .AsNoTracking()
+            .SumAsync(x => x.Amount, cancellationToken);
+
+        var stockSummary = await inventoryRepo.AsQueryable()
+            .AsNoTracking()
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                OnHand = g.Sum(x => x.QuantityOnHand),
+                Reserved = g.Sum(x => x.QuantityReserved)
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var totalDebit = customerBalanceSummary?.TotalDebit ?? 0;
+        var totalCredit = customerBalanceSummary?.TotalCredit ?? 0;
+        var salesBalancePayment = totalCredit;
+        var customerBalance = totalDebit - totalCredit;
+        var vendorBalance = totalVendorInvoice - totalVendorPayment;
+
+        var stockTotalQuantity = stockSummary?.OnHand ?? 0;
+        var reservedQuantity = stockSummary?.Reserved ?? 0;
+        var availableQuantity = stockTotalQuantity - reservedQuantity;
 
         return new List<DashboardWidgetDto>
         {
             new DashboardWidgetDto
             {
-                Id = "admin-revenue-stat",
-                Type = "StatCard",
-                Title = "Total Revenue",
-                Order = 1,
-                Width = 3,
-                Data = new StatCardData { Value = revenue.ToString("C0", usCulture), Trend = "YTD", TrendDirection = "Neutral", Description = "Total Earnings", Icon = "pi pi-dollar" }
-            },
-            new DashboardWidgetDto
-            {
-                Id = "admin-users-stat",
-                Type = "StatCard",
-                Title = "Active Users",
-                Order = 2,
-                Width = 3,
-                Data = new StatCardData { Value = activeUsers.ToString(), Trend = "Active", TrendDirection = "Neutral", Description = "System Users", Icon = "pi pi-users" }
-            },
-            new DashboardWidgetDto
-            {
-                Id = "admin-orders-stat",
-                Type = "StatCard",
-                Title = "Pending Action",
-                Order = 3,
-                Width = 3,
-                Data = new StatCardData { Value = pendingOrders.ToString(), Trend = "Orders", TrendDirection = pendingOrders > 0 ? "Down" : "Up", Description = "Needs Verification", Icon = "pi pi-shopping-cart" }
-            },
-            new DashboardWidgetDto
-            {
-                Id = "admin-system-health",
-                Type = "StatCard",
-                Title = "System Health",
-                Order = 4,
-                Width = 3,
-                Data = new StatCardData { Value = "98%", Trend = "Stable", TrendDirection = "Neutral", Description = "Uptime", Icon = "pi pi-server" }
-            },
-            new DashboardWidgetDto
-            {
-                Id = "admin-sales-chart",
+                Id = "admin-yearly-revenue",
                 Type = "Chart",
-                Title = "Sales Overview (Last 6 Months)",
-                Order = 5,
-                Width = 8,
-                Data = new ChartData 
-                { 
-                    Labels = chartLabels,
-                    Values = chartValues,
+                Title = "Yearly Revenue",
+                Order = 1,
+                Width = 4,
+                Data = new ChartData
+                {
+                    Labels = yearlyLabels,
+                    Values = yearlyValues,
                     ChartType = "bar"
                 }
             },
             new DashboardWidgetDto
             {
-                Id = "admin-top-products",
-                Type = "Table",
-                Title = "Top Selling Products",
-                Order = 6,
+                Id = "admin-seasonal-revenue",
+                Type = "Chart",
+                Title = "Seasonal Revenue",
+                Order = 2,
                 Width = 4,
-                Data = new TableData 
-                { 
-                    Headers = new() { "Product", "Category", "Revenue" },
-                    Rows = topProductRows
+                Data = new ChartData
+                {
+                    Labels = seasonalRevenue.Select(x => x.Season).ToList(),
+                    Values = seasonalRevenue.Select(x => (double)x.Total).ToList(),
+                    ChartType = "bar"
+                }
+            },
+            new DashboardWidgetDto
+            {
+                Id = "admin-sales-overview-6m",
+                Type = "Chart",
+                Title = "Sales Overview (Last 12 Months)",
+                Order = 3,
+                Width = 4,
+                Data = new ChartData
+                {
+                    Labels = monthlyLabels,
+                    Values = monthlyValues,
+                    ChartType = "bar"
+                }
+            },
+            new DashboardWidgetDto
+            {
+                Id = "admin-shipped-qty",
+                Type = "StatCard",
+                Title = "Shipped Quantity",
+                Order = 4,
+                Width = 3,
+                Data = new StatCardData
+                {
+                    Value = shippedQuantity.ToString("N0", usCulture),
+                    Trend = "Status",
+                    TrendDirection = "Neutral",
+                    Description = "Shipped",
+                    Icon = "pi pi-send"
+                }
+            },
+            new DashboardWidgetDto
+            {
+                Id = "admin-pending-qty",
+                Type = "StatCard",
+                Title = "Pending Quantity",
+                Order = 5,
+                Width = 3,
+                Data = new StatCardData
+                {
+                    Value = pendingQuantity.ToString("N0", usCulture),
+                    Trend = "Status",
+                    TrendDirection = "Neutral",
+                    Description = "Pending / PreOrder / Approved",
+                    Icon = "pi pi-clock"
+                }
+            },
+            new DashboardWidgetDto
+            {
+                Id = "admin-waiting-qty",
+                Type = "StatCard",
+                Title = "Waiting Quantity",
+                Order = 6,
+                Width = 3,
+                Data = new StatCardData
+                {
+                    Value = waitingQuantity.ToString("N0", usCulture),
+                    Trend = "Status",
+                    TrendDirection = "Neutral",
+                    Description = "Packed & Waiting Shipment",
+                    Icon = "pi pi-box"
+                }
+            },
+            new DashboardWidgetDto
+            {
+                Id = "admin-balance-stock-overview",
+                Type = "CompositeKpi",
+                Title = "Balance & Stock Overview",
+                Order = 7,
+                Width = 12,
+                Data = new CompositeKpiData
+                {
+                    Sections =
+                    {
+                        new CompositeKpiSection
+                        {
+                            Title = "Balance",
+                            Items =
+                            {
+                                new CompositeKpiItem
+                                {
+                                    Label = "Sales Balance Payment",
+                                    Value = salesBalancePayment.ToString("C2", usCulture),
+                                    Icon = "pi pi-money-bill",
+                                    Trend = "Collected",
+                                    TrendDirection = "Neutral"
+                                },
+                                new CompositeKpiItem
+                                {
+                                    Label = "Vendor Balance",
+                                    Value = vendorBalance.ToString("C2", usCulture),
+                                    Icon = "pi pi-briefcase",
+                                    Trend = "Open",
+                                    TrendDirection = "Neutral"
+                                },
+                                new CompositeKpiItem
+                                {
+                                    Label = "Customer Balance",
+                                    Value = customerBalance.ToString("C2", usCulture),
+                                    Icon = "pi pi-users",
+                                    Trend = "Outstanding",
+                                    TrendDirection = "Neutral"
+                                }
+                            }
+                        },
+                        new CompositeKpiSection
+                        {
+                            Title = "Stock",
+                            Items =
+                            {
+                                new CompositeKpiItem
+                                {
+                                    Label = "Stock Total Quantity",
+                                    Value = stockTotalQuantity.ToString("N0", usCulture),
+                                    Icon = "pi pi-database",
+                                    Trend = "On Hand",
+                                    TrendDirection = "Neutral"
+                                },
+                                new CompositeKpiItem
+                                {
+                                    Label = "Reserved Quantity",
+                                    Value = reservedQuantity.ToString("N0", usCulture),
+                                    Icon = "pi pi-lock",
+                                    Trend = "Reserved",
+                                    TrendDirection = "Neutral"
+                                },
+                                new CompositeKpiItem
+                                {
+                                    Label = "Available Quantity",
+                                    Value = availableQuantity.ToString("N0", usCulture),
+                                    Icon = "pi pi-check-circle",
+                                    Trend = "Available",
+                                    TrendDirection = "Neutral"
+                                }
+                            }
+                        }
+                    }
                 }
             }
         };
@@ -194,6 +360,7 @@ public class GetDashboardQueryHandler : IRequestHandler<GetDashboardQuery, Dashb
 
         // 1. Balance Calculation
         var balanceData = await transactionRepo.AsQueryable()
+            .AsNoTracking()
             .Where(t => t.CustomerId == customerId)
             .GroupBy(t => t.CustomerId)
             .Select(g => new { Debit = g.Sum(t => t.DebitAmount), Credit = g.Sum(t => t.CreditAmount) })
@@ -203,16 +370,19 @@ public class GetDashboardQueryHandler : IRequestHandler<GetDashboardQuery, Dashb
 
         // 2. Active Orders
         var activeOrderCount = await orderRepo.AsQueryable()
+            .AsNoTracking()
             .Where(o => o.CustomerId == customerId && (o.Status == OrderStatus.Pending || o.Status == OrderStatus.PreOrder || o.Status == OrderStatus.PackedAndWaitingShipment))
             .CountAsync(cancellationToken);
 
         // 3. Total Spent (Lifetime Value)
         var totalSpent = await orderRepo.AsQueryable()
+            .AsNoTracking()
             .Where(o => o.CustomerId == customerId && !o.IsCanceled)
             .SumAsync(o => o.GrandTotal, cancellationToken);
 
         // 4. Recent Orders
         var recentOrders = await orderRepo.AsQueryable()
+            .AsNoTracking()
             .Where(o => o.CustomerId == customerId)
             .OrderByDescending(o => o.OrderedAt)
             .Take(5)

@@ -57,4 +57,8 @@ export class PaymentService {
   rejectPayment(id: number, reason: string): Observable<Result<boolean>> {
     return this.http.post<Result<boolean>>(`${this.apiUrl}/${id}/reject`, { reason });
   }
+
+  getCurrencies(): Observable<Result<any[]>> {
+    return this.http.get<Result<any[]>>(`${this.apiUrl}/currencies`);
+  }
 }

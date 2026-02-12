@@ -55,6 +55,7 @@ import { environment } from '../../../../environments/environment';
 import { InventoryService, ProductStockStatusDto } from '../../../core/services/inventory.service';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.constants';
+import { ImageService } from '../../../core/services/image.service';
 
 @Component({
   selector: 'app-orders-to-be-approved',
@@ -575,7 +576,7 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
                       <div
                         class="w-40 h-40 flex items-center justify-center bg-white rounded-lg p-2"
                       >
-                        @if (imageErrors().has(product.productCode)) {
+                        @if (!getImageUrl(product)) {
                           <div
                             class="flex flex-col items-center justify-center text-surface-400 dark:text-surface-600 gap-2"
                           >
@@ -586,12 +587,10 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
                           </div>
                         } @else {
                           <img
-                            [src]="
-                              environment.cdnUrl + '/ProductImages/' + product.productCode + '.jpg'
-                            "
+                            [src]="getImageUrl(product)"
                             [alt]="product.productName"
-                            class="max-w-full max-h-full object-contain"
-                            (error)="onImageError(product.productCode)"
+                            class="max-w-full max-h-full object-contain mix-blend-multiply dark:mix-blend-normal"
+                            (error)="onImageError(product)"
                           />
                         }
                       </div>
@@ -805,7 +804,7 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
                 </div>
                 <div class="p-4 flex flex-col items-center gap-3">
                   <div class="w-32 h-32 flex items-center justify-center bg-white rounded-lg">
-                    @if (imageErrors().has(product.sku)) {
+                    @if (!getImageUrl(product)) {
                       <div
                         class="flex flex-col items-center justify-center text-surface-400 dark:text-surface-600 gap-2"
                       >
@@ -816,10 +815,10 @@ import { STOCK_CHECK_TRIGGER_STATUSES } from '../../../core/constants/order.cons
                       </div>
                     } @else {
                       <img
-                        [src]="environment.cdnUrl + '/ProductImages/' + product.sku + '.jpg'"
+                        [src]="getImageUrl(product)"
                         [alt]="product.name"
-                        class="max-w-full max-h-full object-contain"
-                        (error)="onImageError(product.sku)"
+                        class="max-w-full max-h-full object-contain mix-blend-multiply dark:mix-blend-normal"
+                        (error)="onImageError(product)"
                       />
                     }
                   </div>
@@ -1178,6 +1177,7 @@ export class OrdersToBeApproved implements OnInit {
   private reportService = inject(ReportService);
   private productService = inject(ProductService);
   private inventoryService = inject(InventoryService);
+  private imageService = inject(ImageService);
 
   loading = signal(false);
   rows = signal(10);
@@ -1336,14 +1336,40 @@ export class OrdersToBeApproved implements OnInit {
 
   /**
    * Görsel yükleme hatası durumunda tetiklenir
-   * @param code Ürün kodu veya SKU
+   * @param item Ürün nesnesi
    */
-  onImageError(code: string) {
-    this.imageErrors.update((prev) => {
-      const next = new Set(prev);
-      next.add(code);
-      return next;
-    });
+  onImageError(item: any) {
+    if (typeof item.imageFallback === 'undefined') {
+      item.imageFallback = 0;
+    }
+
+    if (item.imageFallback >= 2) {
+      this.imageErrors.update((prev) => {
+        const next = new Set(prev);
+        const key = item.sku || item.productCode;
+        if (key) next.add(key);
+        return next;
+      });
+      return;
+    }
+
+    item.imageFallback = (item.imageFallback || 0) + 1;
+
+    // Force update for signals
+    if (this.availableProducts().includes(item)) {
+      this.availableProducts.update((curr) => [...curr]);
+    } else if (this.detailData().includes(item)) {
+      this.detailData.update((curr) => [...curr]);
+    }
+  }
+
+  getImageUrl(item: any): string {
+    const product = {
+      sku: item.sku || item.productCode,
+      imageUrl: item.imageUrl,
+      imageFallback: item.imageFallback,
+    };
+    return this.imageService.getImageUrl(product);
   }
 
   /**

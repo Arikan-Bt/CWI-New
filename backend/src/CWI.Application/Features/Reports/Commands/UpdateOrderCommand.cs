@@ -311,12 +311,11 @@ public class UpdateOrderCommand : IRequest<bool>
             ConsumesOnHand(status) || ReservesStock(status);
 
         private static bool ConsumesOnHand(OrderStatus status) =>
-            status == OrderStatus.Shipped;
+            status == OrderStatus.Shipped || status == OrderStatus.PackedAndWaitingShipment;
 
         private static bool ReservesStock(OrderStatus status) =>
             status == OrderStatus.Pending
             || status == OrderStatus.PreOrder
-            || status == OrderStatus.PackedAndWaitingShipment
             || status == OrderStatus.Approved;
 
         /// <summary>

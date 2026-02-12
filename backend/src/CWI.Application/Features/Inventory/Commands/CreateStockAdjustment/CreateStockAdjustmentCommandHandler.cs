@@ -136,7 +136,7 @@ public class CreateStockAdjustmentCommandHandler : IRequestHandler<CreateStockAd
                     }
                 }
 
-                var inventoryItem = await inventoryRepo.FirstOrDefaultAsync(
+                var inventoryItem = await inventoryRepo.AsQueryableTracking().FirstOrDefaultAsync(
                     i => i.ProductId == product.Id && i.WarehouseId == warehouseId,
                     cancellationToken);
 

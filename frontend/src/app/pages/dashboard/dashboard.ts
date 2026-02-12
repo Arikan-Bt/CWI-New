@@ -6,6 +6,7 @@ import { StatWidgetComponent } from './components/stat-widget.component';
 import { ChartWidgetComponent } from './components/chart-widget.component';
 import { TableWidgetComponent } from './components/table-widget.component';
 import { BannerWidgetComponent } from './components/banner-widget.component';
+import { CompositeKpiWidgetComponent } from './components/composite-kpi-widget.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -16,6 +17,7 @@ import { BannerWidgetComponent } from './components/banner-widget.component';
     ChartWidgetComponent,
     TableWidgetComponent,
     BannerWidgetComponent,
+    CompositeKpiWidgetComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',

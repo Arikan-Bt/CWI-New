@@ -19,11 +19,13 @@ public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, UserDto
 
     public async Task<UserDto?> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
     {
+        // AsNoTracking: Sadece okuma amaçlı sorgu, tracking gereksiz
+        // WarehouseAccess Include kaldırıldı: DTO'da kullanılmıyor
         var user = await _unitOfWork.Repository<User>().AsQueryable()
+            .AsNoTracking()
             .Include(u => u.Role)
             .Include(u => u.LinkedCustomer)
             .Include(u => u.BrandAccess)
-            .Include(u => u.WarehouseAccess)
             .FirstOrDefaultAsync(u => u.Id == request.Id, cancellationToken);
 
         if (user == null) return null;

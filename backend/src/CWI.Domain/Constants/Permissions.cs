@@ -100,6 +100,8 @@ public static class Permissions
         public const string Settings_CustomerManagement = "Permissions.Menus.Settings.CustomerManagement";
         public const string Settings_WarehouseManagement = "Permissions.Menus.Settings.WarehouseManagement";
         public const string Settings_BrandManagement = "Permissions.Menus.Settings.BrandManagement";
+        public const string Settings_PurchasePriceManagement = "Permissions.Menus.Settings.PurchasePriceManagement";
+        public const string Settings_SalesPriceManagement = "Permissions.Menus.Settings.SalesPriceManagement";
     }
 
     /// <summary>
@@ -111,5 +113,26 @@ public static class Permissions
         public const string Create = "Permissions.Brands.Create";
         public const string Edit = "Permissions.Brands.Edit";
         public const string Delete = "Permissions.Brands.Delete";
+    }
+    /// <summary>
+    /// Satın alma fiyat yönetimi yetkileri
+    /// </summary>
+    public static class PurchasePrices
+    {
+        public const string View = "Permissions.PurchasePrices.View";
+        public const string Create = "Permissions.PurchasePrices.Create";
+        public const string Edit = "Permissions.PurchasePrices.Edit";
+        public const string Delete = "Permissions.PurchasePrices.Delete";
+    }
+
+    /// <summary>
+    /// Satış fiyat yönetimi yetkileri
+    /// </summary>
+    public static class SalesPrices
+    {
+        public const string View = "Permissions.SalesPrices.View";
+        public const string Create = "Permissions.SalesPrices.Create";
+        public const string Edit = "Permissions.SalesPrices.Edit";
+        public const string Delete = "Permissions.SalesPrices.Delete";
     }
 }

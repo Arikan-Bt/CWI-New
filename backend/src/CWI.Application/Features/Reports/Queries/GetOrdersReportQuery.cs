@@ -112,6 +112,7 @@ public class GetOrdersReportQuery : IRequest<OrdersReportResponse>
                     OrderDate = g.Select(x => x.Order.OrderedAt).FirstOrDefault(),
                     RequestedShipmentDate = g.Select(x => x.Order.ShippedAt).FirstOrDefault(),
                     OrderDescription = g.Select(x => x.Order.Notes).FirstOrDefault(),
+                    Season = g.Select(x => x.Order.Season).FirstOrDefault(),
                     
                     CustomerCode = g.Select(x => x.Order != null && x.Order.Customer != null ? x.Order.Customer.Code : null).FirstOrDefault(),
                     CustomerName = g.Select(x => x.Order != null && x.Order.Customer != null ? x.Order.Customer.Name : null).FirstOrDefault(),
@@ -193,7 +194,7 @@ public class GetOrdersReportQuery : IRequest<OrdersReportResponse>
                 {
                     CWI.Domain.Enums.OrderStatus.Draft => "Draft",
                     CWI.Domain.Enums.OrderStatus.Pending => "Pending",
-                    CWI.Domain.Enums.OrderStatus.Approved => "Approved",
+                    CWI.Domain.Enums.OrderStatus.Approved => "Order",
                     CWI.Domain.Enums.OrderStatus.Shipped => "Shipped",
                     CWI.Domain.Enums.OrderStatus.Canceled => "Canceled",
                     CWI.Domain.Enums.OrderStatus.PreOrder => "Pre Order",
@@ -212,6 +213,7 @@ public class GetOrdersReportQuery : IRequest<OrdersReportResponse>
                 PaymentType = x.PaymentType,
                 ShipmentMethod = x.ShipmentMethod,
                 OrderDescription = x.OrderDescription,
+                Season = x.Season,
                 SubTotal = x.Total + x.Discount,
                 GrandTotal = x.Total
             }).ToList();

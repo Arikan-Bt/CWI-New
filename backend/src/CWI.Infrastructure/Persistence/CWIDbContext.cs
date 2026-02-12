@@ -45,6 +45,8 @@ public class CWIDbContext : DbContext
     public DbSet<ProductPrice> ProductPrices => Set<ProductPrice>();
     public DbSet<ProductImage> ProductImages => Set<ProductImage>();
     public DbSet<ProductNote> ProductNotes => Set<ProductNote>();
+    public DbSet<ProductPurchasePrice> ProductPurchasePrices => Set<ProductPurchasePrice>();
+    public DbSet<ProductSalesPrice> ProductSalesPrices => Set<ProductSalesPrice>();
     
     #endregion
     

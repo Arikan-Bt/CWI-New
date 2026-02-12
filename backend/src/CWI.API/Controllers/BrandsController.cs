@@ -5,6 +5,8 @@ using CWI.Application.Features.Brands.Commands.DeleteBrand;
 using CWI.Application.Features.Brands.Commands.UpdateBrand;
 using CWI.Application.Features.Brands.Queries.GetBrandById;
 using CWI.Application.Features.Brands.Queries.GetBrands;
+using CWI.Application.Features.Brands.Queries.GetBrandProducts;
+using CWI.Application.Features.Brands.Commands.UpdateBrandProducts;
 using CWI.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -118,5 +120,30 @@ public class BrandsController : ControllerBase
     {
         var result = await _mediator.Send(new DeleteBrandCommand { Id = id });
         return Ok(Result<bool>.Succeed(result));
+    }
+
+    /// <summary>
+    /// Markaya ait ürünleri getirir
+    /// </summary>
+    /// <param name="id">Marka Id</param>
+    /// <returns>Marka ürünleri listesi</returns>
+    [HttpGet("{id}/products")]
+    public async Task<IActionResult> GetBrandProducts(int id)
+    {
+        var result = await _mediator.Send(new GetBrandProductsQuery(id));
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Markaya ürünleri atar
+    /// </summary>
+    /// <param name="id">Marka Id</param>
+    /// <param name="productIds">Ürün Id listesi</param>
+    /// <returns>İşlem sonucu</returns>
+    [HttpPut("{id}/products")]
+    public async Task<IActionResult> UpdateBrandProducts(int id, [FromBody] List<int> productIds)
+    {
+        var result = await _mediator.Send(new UpdateBrandProductsCommand(id, productIds));
+        return Ok(result);
     }
 }

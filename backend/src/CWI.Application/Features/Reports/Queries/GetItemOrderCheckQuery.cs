@@ -122,7 +122,7 @@ public class GetItemOrderCheckQueryHandler : IRequestHandler<GetItemOrderCheckQu
             {
                 CWI.Domain.Enums.OrderStatus.Draft => "Draft",
                 CWI.Domain.Enums.OrderStatus.Pending => "Pending",
-                CWI.Domain.Enums.OrderStatus.Approved => "Approved",
+                CWI.Domain.Enums.OrderStatus.Approved => "Order",
                 CWI.Domain.Enums.OrderStatus.Shipped => "Shipped",
                 CWI.Domain.Enums.OrderStatus.Canceled => "Canceled",
                 CWI.Domain.Enums.OrderStatus.PreOrder => "Pre Order",

@@ -288,10 +288,12 @@ export class UserManagement implements OnInit {
       .getUserById(user.id)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (data) => {
-          this.isEditMode.set(true);
-          this.selectedUser.set(data);
-          this.modalVisible.set(true);
+        next: (result) => {
+          if (result.success) {
+            this.isEditMode.set(true);
+            this.selectedUser.set(result.data);
+            this.modalVisible.set(true);
+          }
         },
         error: () =>
           this.messageService.add({
