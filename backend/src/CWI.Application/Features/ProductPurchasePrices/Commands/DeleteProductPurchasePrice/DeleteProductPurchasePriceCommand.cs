@@ -1,12 +1,15 @@
+﻿using CWI.Application.Common.Caching;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Domain.Entities.Products;
 using MediatR;
 
 namespace CWI.Application.Features.ProductPurchasePrices.Commands.DeleteProductPurchasePrice;
 
-public class DeleteProductPurchasePriceCommand : IRequest<int>
+public class DeleteProductPurchasePriceCommand : IRequest<int>, IInvalidatesCache
 {
     public int Id { get; set; }
+
+    public IReadOnlyCollection<string> CachePrefixesToInvalidate => [CachePrefixes.LookupProductPurchasePrices];
 
     public class DeleteProductPurchasePriceCommandHandler : IRequestHandler<DeleteProductPurchasePriceCommand, int>
     {
@@ -27,9 +30,6 @@ public class DeleteProductPurchasePriceCommand : IRequest<int>
                 throw new KeyNotFoundException($"ProductPurchasePrice with ID {request.Id} not found.");
             }
 
-            // Hard delete or soft delete? Entity implements ISoftDeletable, so repository should handle it or we set IsActive = false.
-            // Usually repository DeleteAsync handles soft delete if configured, or performs hard delete.
-            // Let's assume standard DeleteAsync.
             repository.Delete(entity);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 

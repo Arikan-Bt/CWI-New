@@ -1,3 +1,4 @@
+﻿using CWI.Application.Common.Caching;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Domain.Entities.Inventory;
 using MediatR;
@@ -8,9 +9,11 @@ namespace CWI.Application.Features.Inventory.Commands.DeleteWarehouse;
 /// <summary>
 /// Depo silme komutu (Soft Delete)
 /// </summary>
-public class DeleteWarehouseCommand : IRequest<bool>
+public class DeleteWarehouseCommand : IRequest<bool>, IInvalidatesCache
 {
     public int Id { get; set; }
+
+    public IReadOnlyCollection<string> CachePrefixesToInvalidate => [CachePrefixes.LookupWarehouses];
 
     public class DeleteWarehouseCommandHandler : IRequestHandler<DeleteWarehouseCommand, bool>
     {
@@ -25,20 +28,17 @@ public class DeleteWarehouseCommand : IRequest<bool>
         {
             var warehouseRepo = _unitOfWork.Repository<Warehouse, int>();
 
-            // Depoyu bul
             var warehouse = await warehouseRepo.GetByIdAsync(request.Id, cancellationToken);
             if (warehouse == null)
             {
                 throw new InvalidOperationException($"Warehouse with ID {request.Id} not found.");
             }
 
-            // Default depo silinemez kontrolü
             if (warehouse.IsDefault)
             {
                 throw new InvalidOperationException("Cannot delete the default warehouse. Please set another warehouse as default first.");
             }
 
-            // Depoda stok var mı kontrolü (opsiyonel uyarı)
             var inventoryRepo = _unitOfWork.Repository<InventoryItem, long>();
             var hasInventory = await inventoryRepo
                 .AsQueryable()
@@ -49,7 +49,6 @@ public class DeleteWarehouseCommand : IRequest<bool>
                 throw new InvalidOperationException("Cannot delete warehouse with existing inventory items. Please transfer or remove items first.");
             }
 
-            // Soft delete
             warehouse.IsActive = false;
             warehouseRepo.Update(warehouse);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

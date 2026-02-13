@@ -1,10 +1,11 @@
+﻿using CWI.Application.Common.Caching;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Domain.Entities.Customers;
 using MediatR;
 
 namespace CWI.Application.Features.Customers.Commands.CreateCustomer;
 
-public class CreateCustomerCommand : IRequest<int>
+public class CreateCustomerCommand : IRequest<int>, IInvalidatesCache
 {
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -16,6 +17,8 @@ public class CreateCustomerCommand : IRequest<int>
     public string? Email { get; set; }
     public string Status { get; set; } = "Active";
     public bool IsVendor { get; set; }
+
+    public IReadOnlyCollection<string> CachePrefixesToInvalidate => [CachePrefixes.LookupCustomers];
 }
 
 public class CreateCustomerCommandHandler : IRequestHandler<CreateCustomerCommand, int>

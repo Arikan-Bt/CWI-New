@@ -1,12 +1,15 @@
+﻿using CWI.Application.Common.Caching;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Domain.Entities.Products;
 using MediatR;
 
 namespace CWI.Application.Features.ProductSalesPrices.Commands.DeleteProductSalesPrice;
 
-public class DeleteProductSalesPriceCommand : IRequest<int>
+public class DeleteProductSalesPriceCommand : IRequest<int>, IInvalidatesCache
 {
     public int Id { get; set; }
+
+    public IReadOnlyCollection<string> CachePrefixesToInvalidate => [CachePrefixes.LookupProductSalesPrices];
 
     public class DeleteProductSalesPriceCommandHandler : IRequestHandler<DeleteProductSalesPriceCommand, int>
     {

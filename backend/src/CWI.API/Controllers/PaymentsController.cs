@@ -80,9 +80,9 @@ public class PaymentsController : ControllerBase
     }
 
     [HttpGet("currencies")]
-    public async Task<ActionResult<Result<List<CurrencyDto>>>> GetCurrencies()
+    public async Task<ActionResult<Result<List<CurrencyDto>>>> GetCurrencies([FromQuery] bool bypassCache = false)
     {
-        var result = await _mediator.Send(new GetCurrenciesQuery());
+        var result = await _mediator.Send(new GetCurrenciesQuery { BypassCache = bypassCache });
         return Ok(Result<List<CurrencyDto>>.Succeed(result));
     }
 }

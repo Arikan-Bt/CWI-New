@@ -1,10 +1,14 @@
+﻿using CWI.Application.Common.Caching;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Domain.Entities.Identity;
 using MediatR;
 
 namespace CWI.Application.Features.Users.Commands.DeleteUser;
 
-public record DeleteUserCommand(int Id) : IRequest<bool>;
+public record DeleteUserCommand(int Id) : IRequest<bool>, IInvalidatesCache
+{
+    public IReadOnlyCollection<string> CachePrefixesToInvalidate => [CachePrefixes.LookupUsers];
+}
 
 public class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand, bool>
 {

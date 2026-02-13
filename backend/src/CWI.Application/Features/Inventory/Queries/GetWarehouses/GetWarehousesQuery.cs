@@ -1,5 +1,6 @@
 using CWI.Application.DTOs.Common;
 using CWI.Application.Interfaces.Repositories;
+using CWI.Application.Common.Caching;
 using CWI.Domain.Entities.Inventory;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -110,8 +111,14 @@ public class GetWarehousesPaginatedQueryHandler : IRequestHandler<GetWarehousesP
 /// <summary>
 /// Tüm aktif depoları listele (dropdown için - mevcut fonksiyonalite korunuyor)
 /// </summary>
-public class GetWarehousesQuery : IRequest<List<WarehouseDto>>
+public class GetWarehousesQuery : IRequest<List<WarehouseDto>>, ICacheableQuery
 {
+    public string CacheKey => CachePrefixes.LookupWarehouses;
+    public TimeSpan SlidingExpiration => TimeSpan.FromMinutes(2);
+    public TimeSpan? AbsoluteExpirationRelativeToNow => TimeSpan.FromMinutes(5);
+    public bool BypassCache { get; init; }
+    public bool IsUserScoped => false;
+
     public class GetWarehousesQueryHandler : IRequestHandler<GetWarehousesQuery, List<WarehouseDto>>
     {
         private readonly IUnitOfWork _unitOfWork;

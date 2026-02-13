@@ -1,10 +1,11 @@
+﻿using CWI.Application.Common.Caching;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Domain.Entities.Products;
 using MediatR;
 
 namespace CWI.Application.Features.ProductPurchasePrices.Commands.UpdateProductPurchasePrice;
 
-public class UpdateProductPurchasePriceCommand : IRequest<int>
+public class UpdateProductPurchasePriceCommand : IRequest<int>, IInvalidatesCache
 {
     public int Id { get; set; }
     public int ProductId { get; set; }
@@ -14,6 +15,8 @@ public class UpdateProductPurchasePriceCommand : IRequest<int>
     public DateTime ValidFrom { get; set; }
     public DateTime? ValidTo { get; set; }
     public bool IsActive { get; set; }
+
+    public IReadOnlyCollection<string> CachePrefixesToInvalidate => [CachePrefixes.LookupProductPurchasePrices];
 
     public class UpdateProductPurchasePriceCommandHandler : IRequestHandler<UpdateProductPurchasePriceCommand, int>
     {

@@ -1,15 +1,18 @@
+﻿using CWI.Application.Common.Caching;
 using CWI.Application.DTOs.Users;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Application.Interfaces.Services;
 using CWI.Domain.Entities.Identity;
 using CWI.Domain.Entities.System;
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
 
 namespace CWI.Application.Features.Users.Commands.UpdateUser;
 
-public record UpdateUserCommand(UpdateUserRequest Request) : IRequest<bool>;
+public record UpdateUserCommand(UpdateUserRequest Request) : IRequest<bool>, IInvalidatesCache
+{
+    public IReadOnlyCollection<string> CachePrefixesToInvalidate => [CachePrefixes.LookupUsers];
+}
 
 public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, bool>
 {
@@ -28,7 +31,7 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, bool>
         var user = await _unitOfWork.Repository<User>().AsQueryable()
             .Include(u => u.BrandAccess)
             .FirstOrDefaultAsync(u => u.Id == request.Id, cancellationToken);
-        
+
         if (user == null) return false;
 
         user.FirstName = request.Name;
@@ -39,7 +42,6 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, bool>
         user.IsActive = request.Status == "Active";
         user.UpdatedAt = DateTime.UtcNow;
 
-        // Bağlı cari güncelle
         if (!string.IsNullOrEmpty(request.CurrentAccount))
         {
             var customer = await _unitOfWork.Repository<CWI.Domain.Entities.Customers.Customer>()
@@ -51,7 +53,6 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, bool>
             user.LinkedCustomerId = null;
         }
 
-        // Marka erişimlerini senkronize et (Sync)
         user.BrandAccess.Clear();
         if (request.AllowedBrands != null && request.AllowedBrands.Any())
         {
@@ -86,19 +87,17 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, bool>
 
         _unitOfWork.Repository<User>().Update(user);
 
-        // Aktivite logu kaydet
         var activityLog = new ApplicationLog
         {
             Level = "Information",
             Message = $"User updated: {user.UserName} ({user.FullName})",
             Source = "UpdateUserCommandHandler",
-            UserName = "System Admin", // Normalde ICurrentUserService'den alınmalı
+            UserName = "System Admin",
             LoggedAt = DateTime.UtcNow
         };
         _unitOfWork.Repository<ApplicationLog, long>().Add(activityLog);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-
 
         return true;
     }

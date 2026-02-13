@@ -1,3 +1,4 @@
+﻿using CWI.Application.Common.Caching;
 using CWI.Application.DTOs.Brands;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Domain.Entities.Products;
@@ -8,31 +9,37 @@ using Microsoft.EntityFrameworkCore;
 namespace CWI.Application.Features.Brands.Commands.UpdateBrand;
 
 /// <summary>
-/// Marka güncelleme komutu
+/// Marka guncelleme komutu
 /// </summary>
-public class UpdateBrandCommand : IRequest<BrandDetailDto>
+public class UpdateBrandCommand : IRequest<BrandDetailDto>, IInvalidatesCache
 {
-    /// <summary>Marka güncelleme verileri</summary>
+    /// <summary>Marka guncelleme verileri</summary>
     public UpdateBrandDto Data { get; set; } = null!;
+
+    public IReadOnlyCollection<string> CachePrefixesToInvalidate =>
+    [
+        CachePrefixes.LookupBrandsReports,
+        CachePrefixes.LookupBrandsProducts
+    ];
 }
 
 /// <summary>
-/// UpdateBrandCommand için doğrulayıcı
+/// UpdateBrandCommand icin dogrulayici
 /// </summary>
 public class UpdateBrandCommandValidator : AbstractValidator<UpdateBrandCommand>
 {
     public UpdateBrandCommandValidator()
     {
         RuleFor(x => x.Data.Id)
-            .GreaterThan(0).WithMessage("Geçerli bir marka Id gerekli");
+            .GreaterThan(0).WithMessage("Gecerli bir marka Id gerekli");
 
         RuleFor(x => x.Data.Code)
-            .NotEmpty().WithMessage("Marka kodu boş olamaz")
-            .MaximumLength(50).WithMessage("Marka kodu 50 karakteri geçemez");
+            .NotEmpty().WithMessage("Marka kodu bos olamaz")
+            .MaximumLength(50).WithMessage("Marka kodu 50 karakteri gecemez");
 
         RuleFor(x => x.Data.Name)
-            .NotEmpty().WithMessage("Marka adı boş olamaz")
-            .MaximumLength(200).WithMessage("Marka adı 200 karakteri geçemez");
+            .NotEmpty().WithMessage("Marka adi bos olamaz")
+            .MaximumLength(200).WithMessage("Marka adi 200 karakteri gecemez");
     }
 }
 
@@ -52,16 +59,14 @@ public class UpdateBrandCommandHandler : IRequestHandler<UpdateBrandCommand, Bra
     {
         var brandRepo = _unitOfWork.Repository<Brand, int>();
 
-        // Markayı bul
         var brand = await brandRepo.AsQueryable()
             .FirstOrDefaultAsync(x => x.Id == request.Data.Id, cancellationToken);
 
         if (brand == null)
         {
-            throw new KeyNotFoundException($"Marka bulunamadı: {request.Data.Id}");
+            throw new KeyNotFoundException($"Marka bulunamadi: {request.Data.Id}");
         }
 
-        // Güncelle
         brand.Code = request.Data.Code;
         brand.Name = request.Data.Name;
         brand.LogoUrl = request.Data.LogoUrl;
@@ -72,7 +77,6 @@ public class UpdateBrandCommandHandler : IRequestHandler<UpdateBrandCommand, Bra
         brandRepo.Update(brand);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // DTO'ya dönüştür ve dön
         return new BrandDetailDto
         {
             Id = brand.Id,

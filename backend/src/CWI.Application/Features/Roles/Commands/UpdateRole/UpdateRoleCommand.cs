@@ -1,3 +1,4 @@
+﻿using CWI.Application.Common.Caching;
 using CWI.Application.DTOs.Roles;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Domain.Entities.Identity;
@@ -6,7 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CWI.Application.Features.Roles.Commands.UpdateRole;
 
-public record UpdateRoleCommand : UpdateRoleDto, IRequest<Unit>;
+public record UpdateRoleCommand : UpdateRoleDto, IRequest<Unit>, IInvalidatesCache
+{
+    public IReadOnlyCollection<string> CachePrefixesToInvalidate => [CachePrefixes.LookupRoles, CachePrefixes.LookupUsers];
+}
 
 public class UpdateRoleCommandHandler : IRequestHandler<UpdateRoleCommand, Unit>
 {
@@ -30,8 +34,6 @@ public class UpdateRoleCommandHandler : IRequestHandler<UpdateRoleCommand, Unit>
         role.Description = request.Description;
         role.IsActive = request.IsActive;
 
-        // Yetkileri güncelle
-        // Mevcut yetkileri sil (Explicit delete to ensure they are removed)
         var existingPermissions = role.RolePermissions.ToList();
         if (existingPermissions.Any())
         {
@@ -39,7 +41,6 @@ public class UpdateRoleCommandHandler : IRequestHandler<UpdateRoleCommand, Unit>
         }
         role.RolePermissions.Clear();
 
-        // Yeni yetkileri ekle
         foreach (var permission in request.Permissions)
         {
             role.RolePermissions.Add(new RolePermission

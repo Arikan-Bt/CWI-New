@@ -1,4 +1,4 @@
-using CWI.Application.Features.Products.Queries.GetBrands;
+﻿using CWI.Application.Features.Products.Queries.GetBrands;
 using CWI.Application.Features.Products.Queries.GetVendorProducts;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -19,7 +19,7 @@ public class ProductsController : ControllerBase
     }
 
     /// <summary>
-    /// Vendor rolündeki kullanıcılar için ürünleri listeler
+    /// Vendor rolundeki kullanicilar icin urunleri listeler
     /// </summary>
     [HttpGet("vendor-products")]
     public async Task<IActionResult> GetVendorProducts([FromQuery] GetVendorProductsQuery query)
@@ -29,7 +29,7 @@ public class ProductsController : ControllerBase
     }
 
     /// <summary>
-    /// Ürün detayını getirir
+    /// Urun detayini getirir
     /// </summary>
     [HttpGet("{id}")]
     public async Task<IActionResult> GetProductDetail(int id)
@@ -39,19 +39,18 @@ public class ProductsController : ControllerBase
         return Ok(result);
     }
 
-
     /// <summary>
-    /// Tüm markaları listeler
+    /// Tum markalari listeler
     /// </summary>
     [HttpGet("brands")]
-    public async Task<IActionResult> GetBrands()
+    public async Task<IActionResult> GetBrands([FromQuery] bool bypassCache = false)
     {
-        var result = await _mediator.Send(new GetBrandsQuery());
+        var result = await _mediator.Send(new GetBrandsQuery { BypassCache = bypassCache });
         return Ok(result);
     }
 
     /// <summary>
-    /// Ürüne görsel yükler
+    /// Urune gorsel yukler
     /// </summary>
     [HttpPost("{id}/images")]
     [Consumes("multipart/form-data")]
@@ -62,7 +61,7 @@ public class ProductsController : ControllerBase
     }
 
     /// <summary>
-    /// Ürün görselini siler
+    /// Urun gorselini siler
     /// </summary>
     [HttpDelete("{id}/images")]
     public async Task<IActionResult> DeleteImage(int id, [FromBody] DeleteImageRequest request)

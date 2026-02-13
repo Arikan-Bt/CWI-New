@@ -1,10 +1,11 @@
+﻿using CWI.Application.Common.Caching;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Domain.Entities.Products;
 using MediatR;
 
 namespace CWI.Application.Features.ProductSalesPrices.Commands.CreateProductSalesPrice;
 
-public class CreateProductSalesPriceCommand : IRequest<int>
+public class CreateProductSalesPriceCommand : IRequest<int>, IInvalidatesCache
 {
     public int ProductId { get; set; }
     public int CustomerId { get; set; }
@@ -13,6 +14,8 @@ public class CreateProductSalesPriceCommand : IRequest<int>
     public DateTime ValidFrom { get; set; }
     public DateTime? ValidTo { get; set; }
     public bool IsActive { get; set; } = true;
+
+    public IReadOnlyCollection<string> CachePrefixesToInvalidate => [CachePrefixes.LookupProductSalesPrices];
 
     public class CreateProductSalesPriceCommandHandler : IRequestHandler<CreateProductSalesPriceCommand, int>
     {

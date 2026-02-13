@@ -50,9 +50,9 @@ public class InventoryController : ControllerBase
     /// <returns>Depo listesi</returns>
     [HttpGet("warehouses")]
     [ProducesResponseType(typeof(Result<List<WarehouseDto>>), 200)]
-    public async Task<IActionResult> GetWarehouses()
+    public async Task<IActionResult> GetWarehouses([FromQuery] bool bypassCache = false)
     {
-        var result = await _mediator.Send(new GetWarehousesQuery());
+        var result = await _mediator.Send(new GetWarehousesQuery { BypassCache = bypassCache });
         return Ok(Result<List<WarehouseDto>>.Succeed(result));
     }
 

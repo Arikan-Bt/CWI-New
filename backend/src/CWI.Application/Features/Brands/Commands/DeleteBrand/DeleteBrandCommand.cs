@@ -1,3 +1,4 @@
+﻿using CWI.Application.Common.Caching;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Domain.Entities.Products;
 using MediatR;
@@ -8,10 +9,16 @@ namespace CWI.Application.Features.Brands.Commands.DeleteBrand;
 /// <summary>
 /// Marka silme komutu (soft delete)
 /// </summary>
-public class DeleteBrandCommand : IRequest<bool>
+public class DeleteBrandCommand : IRequest<bool>, IInvalidatesCache
 {
     /// <summary>Silinecek marka Id</summary>
     public int Id { get; set; }
+
+    public IReadOnlyCollection<string> CachePrefixesToInvalidate =>
+    [
+        CachePrefixes.LookupBrandsReports,
+        CachePrefixes.LookupBrandsProducts
+    ];
 }
 
 /// <summary>
@@ -30,16 +37,14 @@ public class DeleteBrandCommandHandler : IRequestHandler<DeleteBrandCommand, boo
     {
         var brandRepo = _unitOfWork.Repository<Brand, int>();
 
-        // Markayı bul
         var brand = await brandRepo.AsQueryable()
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
         if (brand == null)
         {
-            throw new KeyNotFoundException($"Marka bulunamadı: {request.Id}");
+            throw new KeyNotFoundException($"Marka bulunamadi: {request.Id}");
         }
 
-        // Soft delete (ISoftDeletable arayüzü kullanıyor)
         brandRepo.Delete(brand);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

@@ -1,3 +1,4 @@
+﻿using CWI.Application.Common.Caching;
 using CWI.Application.DTOs.Roles;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Domain.Entities.Identity;
@@ -5,7 +6,10 @@ using MediatR;
 
 namespace CWI.Application.Features.Roles.Commands.CreateRole;
 
-public record CreateRoleCommand : CreateRoleDto, IRequest<int>;
+public record CreateRoleCommand : CreateRoleDto, IRequest<int>, IInvalidatesCache
+{
+    public IReadOnlyCollection<string> CachePrefixesToInvalidate => [CachePrefixes.LookupRoles];
+}
 
 public class CreateRoleCommandHandler : IRequestHandler<CreateRoleCommand, int>
 {
@@ -23,7 +27,7 @@ public class CreateRoleCommandHandler : IRequestHandler<CreateRoleCommand, int>
             Name = request.Name,
             Description = request.Description,
             IsActive = request.IsActive,
-            Code = request.Name.Replace(" ", "").ToUpper(), // Basit bir kod üretimi
+            Code = request.Name.Replace(" ", "").ToUpper(),
             RolePermissions = request.Permissions.Select(p => new RolePermission
             {
                 PermissionKey = p

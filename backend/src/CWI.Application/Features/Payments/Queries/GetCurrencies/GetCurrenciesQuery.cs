@@ -1,4 +1,5 @@
 using CWI.Application.Common.Models;
+using CWI.Application.Common.Caching;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Domain.Entities.Payments;
 using MediatR;
@@ -6,8 +7,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CWI.Application.Features.Payments.Queries.GetCurrencies;
 
-public class GetCurrenciesQuery : IRequest<List<CurrencyDto>>
+public class GetCurrenciesQuery : IRequest<List<CurrencyDto>>, ICacheableQuery
 {
+    public string CacheKey => CachePrefixes.LookupCurrencies;
+    public TimeSpan SlidingExpiration => TimeSpan.FromMinutes(2);
+    public TimeSpan? AbsoluteExpirationRelativeToNow => TimeSpan.FromMinutes(5);
+    public bool BypassCache { get; init; }
+    public bool IsUserScoped => false;
+
     public class GetCurrenciesQueryHandler : IRequestHandler<GetCurrenciesQuery, List<CurrencyDto>>
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -26,9 +33,9 @@ public class GetCurrenciesQuery : IRequest<List<CurrencyDto>>
                 .Select(x => new CurrencyDto
                 {
                     Id = x.Id,
-                    Code = x.Code,
-                    Symbol = x.Symbol,
-                    Name = x.Name
+                    Code = x.Code ?? string.Empty,
+                    Symbol = x.Symbol ?? string.Empty,
+                    Name = x.Name ?? string.Empty
                 })
                 .ToListAsync(cancellationToken);
 

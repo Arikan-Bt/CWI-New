@@ -1,3 +1,4 @@
+﻿using CWI.Application.Common.Caching;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Domain.Entities.Customers;
 using MediatR;
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CWI.Application.Features.Customers.Commands.UpdateCustomer;
 
-public class UpdateCustomerCommand : IRequest
+public class UpdateCustomerCommand : IRequest, IInvalidatesCache
 {
     public int Id { get; set; }
     public string Code { get; set; } = string.Empty;
@@ -18,6 +19,8 @@ public class UpdateCustomerCommand : IRequest
     public string? Email { get; set; }
     public string Status { get; set; } = "Active";
     public bool IsVendor { get; set; }
+
+    public IReadOnlyCollection<string> CachePrefixesToInvalidate => [CachePrefixes.LookupCustomers];
 }
 
 public class UpdateCustomerCommandHandler : IRequestHandler<UpdateCustomerCommand>
@@ -34,7 +37,7 @@ public class UpdateCustomerCommandHandler : IRequestHandler<UpdateCustomerComman
         var repo = _unitOfWork.Repository<Customer>();
         var customer = await repo.AsQueryable()
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
-            
+
         if (customer == null)
         {
             throw new Exception($"Customer with id {request.Id} not found");

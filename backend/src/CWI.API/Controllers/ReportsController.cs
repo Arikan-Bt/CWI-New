@@ -77,16 +77,16 @@ public class ReportsController : ControllerBase
     }
 
     [HttpGet("payment-methods")]
-    public async Task<ActionResult<Result<List<object>>>> GetPaymentMethods()
+    public async Task<ActionResult<Result<List<object>>>> GetPaymentMethods([FromQuery] bool bypassCache = false)
     {
-        var result = await _mediator.Send(new GetPaymentMethodsLookupQuery());
+        var result = await _mediator.Send(new GetPaymentMethodsLookupQuery { BypassCache = bypassCache });
         return Ok(Result<List<object>>.Succeed(result));
     }
 
     [HttpGet("shipment-terms")]
-    public async Task<ActionResult<Result<List<object>>>> GetShipmentTerms()
+    public async Task<ActionResult<Result<List<object>>>> GetShipmentTerms([FromQuery] bool bypassCache = false)
     {
-        var result = await _mediator.Send(new GetShipmentTermsLookupQuery());
+        var result = await _mediator.Send(new GetShipmentTermsLookupQuery { BypassCache = bypassCache });
         return Ok(Result<List<object>>.Succeed(result));
     }
 
@@ -112,9 +112,9 @@ public class ReportsController : ControllerBase
     }
 
     [HttpGet("brands")]
-    public async Task<ActionResult<Result<List<BrandLookupDto>>>> GetBrands()
+    public async Task<ActionResult<Result<List<BrandLookupDto>>>> GetBrands([FromQuery] bool bypassCache = false)
     {
-        var result = await _mediator.Send(new GetBrandsQuery());
+        var result = await _mediator.Send(new GetBrandsQuery { BypassCache = bypassCache });
         return Ok(Result<List<BrandLookupDto>>.Succeed(result));
     }
 

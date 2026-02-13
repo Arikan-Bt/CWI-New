@@ -52,6 +52,9 @@ public static class DependencyInjection
         services.AddScoped<ISensitiveDataMasker, SensitiveDataMasker>();
         services.AddScoped<IRequestContextReader, HttpRequestContextReader>();
         services.AddScoped<IErrorLogWriter, ErrorLogWriter>();
+        services.AddScoped<ICacheKeyBuilder, CacheKeyBuilder>();
+        services.AddSingleton<ICacheRegistry, InMemoryCacheRegistry>();
+        services.AddSingleton<ICacheService, MemoryCacheService>();
         
         // Authorization
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();

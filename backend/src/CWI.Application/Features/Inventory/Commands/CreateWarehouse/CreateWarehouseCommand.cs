@@ -1,3 +1,4 @@
+﻿using CWI.Application.Common.Caching;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Domain.Entities.Inventory;
 using MediatR;
@@ -6,14 +7,16 @@ using Microsoft.EntityFrameworkCore;
 namespace CWI.Application.Features.Inventory.Commands.CreateWarehouse;
 
 /// <summary>
-/// Yeni depo oluşturma komutu
+/// Yeni depo olusturma komutu
 /// </summary>
-public class CreateWarehouseCommand : IRequest<int>
+public class CreateWarehouseCommand : IRequest<int>, IInvalidatesCache
 {
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? Address { get; set; }
     public bool IsDefault { get; set; }
+
+    public IReadOnlyCollection<string> CachePrefixesToInvalidate => [CachePrefixes.LookupWarehouses];
 
     public class CreateWarehouseCommandHandler : IRequestHandler<CreateWarehouseCommand, int>
     {
@@ -28,7 +31,6 @@ public class CreateWarehouseCommand : IRequest<int>
         {
             var warehouseRepo = _unitOfWork.Repository<Warehouse, int>();
 
-            // Code unique kontrolü
             var existingWarehouse = await warehouseRepo
                 .FirstOrDefaultAsync(w => w.Code == request.Code, cancellationToken);
 
@@ -37,7 +39,6 @@ public class CreateWarehouseCommand : IRequest<int>
                 throw new InvalidOperationException($"Warehouse with code '{request.Code}' already exists.");
             }
 
-            // Eğer IsDefault true ise, diğer tüm depoların IsDefault'unu false yap
             if (request.IsDefault)
             {
                 var allWarehouses = await warehouseRepo
@@ -51,7 +52,6 @@ public class CreateWarehouseCommand : IRequest<int>
                 }
             }
 
-            // Yeni depo oluştur
             var warehouse = new Warehouse
             {
                 Code = request.Code,

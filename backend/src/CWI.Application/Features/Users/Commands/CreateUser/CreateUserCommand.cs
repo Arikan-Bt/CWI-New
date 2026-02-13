@@ -1,13 +1,16 @@
+﻿using CWI.Application.Common.Caching;
 using CWI.Application.DTOs.Users;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Application.Interfaces.Services;
 using CWI.Domain.Entities.Identity;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace CWI.Application.Features.Users.Commands.CreateUser;
 
-public record CreateUserCommand(CreateUserRequest Request) : IRequest<int>;
+public record CreateUserCommand(CreateUserRequest Request) : IRequest<int>, IInvalidatesCache
+{
+    public IReadOnlyCollection<string> CachePrefixesToInvalidate => [CachePrefixes.LookupUsers];
+}
 
 public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, int>
 {
@@ -24,7 +27,6 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, int>
     {
         var request = command.Request;
 
-        // Check if user exists
         var existingUser = await _unitOfWork.Repository<User>().FirstOrDefaultAsync(u => u.UserName == request.ClientCode, cancellationToken);
         if (existingUser != null)
             throw new Exception("This user code is already in use.");
@@ -39,11 +41,10 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, int>
             RoleId = request.RoleId,
             PhoneNumber = request.MobilePhone,
             IsActive = request.Status == "Active",
-            ProjectType = CWI.Domain.Enums.ProjectType.CWI, // Default for now
+            ProjectType = CWI.Domain.Enums.ProjectType.CWI,
             CreatedAt = DateTime.UtcNow
         };
 
-        // Bağlı cari varsa bul (ClientCode cari kodu olarak kullanılıyor olabilir veya CurrentAccount)
         if (!string.IsNullOrEmpty(request.CurrentAccount))
         {
             var customer = await _unitOfWork.Repository<CWI.Domain.Entities.Customers.Customer>()
@@ -54,7 +55,6 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, int>
             }
         }
 
-        // Marka erişimlerini ekle
         if (request.AllowedBrands != null && request.AllowedBrands.Any())
         {
             foreach (var brandId in request.AllowedBrands)

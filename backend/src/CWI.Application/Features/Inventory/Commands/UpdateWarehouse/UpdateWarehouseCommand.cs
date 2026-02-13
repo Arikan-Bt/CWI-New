@@ -1,3 +1,4 @@
+﻿using CWI.Application.Common.Caching;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Domain.Entities.Inventory;
 using MediatR;
@@ -6,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 namespace CWI.Application.Features.Inventory.Commands.UpdateWarehouse;
 
 /// <summary>
-/// Depo güncelleme komutu
+/// Depo guncelleme komutu
 /// </summary>
-public class UpdateWarehouseCommand : IRequest<bool>
+public class UpdateWarehouseCommand : IRequest<bool>, IInvalidatesCache
 {
     public int Id { get; set; }
     public string Code { get; set; } = string.Empty;
@@ -16,6 +17,8 @@ public class UpdateWarehouseCommand : IRequest<bool>
     public string? Address { get; set; }
     public bool IsActive { get; set; }
     public bool IsDefault { get; set; }
+
+    public IReadOnlyCollection<string> CachePrefixesToInvalidate => [CachePrefixes.LookupWarehouses];
 
     public class UpdateWarehouseCommandHandler : IRequestHandler<UpdateWarehouseCommand, bool>
     {
@@ -30,14 +33,12 @@ public class UpdateWarehouseCommand : IRequest<bool>
         {
             var warehouseRepo = _unitOfWork.Repository<Warehouse, int>();
 
-            // Depoyu bul
             var warehouse = await warehouseRepo.GetByIdAsync(request.Id, cancellationToken);
             if (warehouse == null)
             {
                 throw new InvalidOperationException($"Warehouse with ID {request.Id} not found.");
             }
 
-            // Code unique kontrolü (kendi ID'si hariç)
             var existingWarehouse = await warehouseRepo
                 .FirstOrDefaultAsync(w => w.Code == request.Code && w.Id != request.Id, cancellationToken);
 
@@ -46,7 +47,6 @@ public class UpdateWarehouseCommand : IRequest<bool>
                 throw new InvalidOperationException($"Warehouse with code '{request.Code}' already exists.");
             }
 
-            // Eğer IsDefault true ise, diğer tüm depoların IsDefault'unu false yap
             if (request.IsDefault && !warehouse.IsDefault)
             {
                 var allWarehouses = await warehouseRepo
@@ -60,7 +60,6 @@ public class UpdateWarehouseCommand : IRequest<bool>
                 }
             }
 
-            // Güncelle
             warehouse.Code = request.Code;
             warehouse.Name = request.Name;
             warehouse.Address = request.Address;

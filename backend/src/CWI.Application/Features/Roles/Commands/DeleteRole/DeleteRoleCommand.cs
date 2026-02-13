@@ -1,3 +1,4 @@
+﻿using CWI.Application.Common.Caching;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Domain.Entities.Identity;
 using MediatR;
@@ -5,7 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CWI.Application.Features.Roles.Commands.DeleteRole;
 
-public record DeleteRoleCommand(int Id) : IRequest<Unit>;
+public record DeleteRoleCommand(int Id) : IRequest<Unit>, IInvalidatesCache
+{
+    public IReadOnlyCollection<string> CachePrefixesToInvalidate => [CachePrefixes.LookupRoles, CachePrefixes.LookupUsers];
+}
 
 public class DeleteRoleCommandHandler : IRequestHandler<DeleteRoleCommand, Unit>
 {

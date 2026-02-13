@@ -1,3 +1,4 @@
+﻿using CWI.Application.Common.Caching;
 using CWI.Application.Interfaces.Repositories;
 using CWI.Domain.Entities.Customers;
 using MediatR;
@@ -5,7 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CWI.Application.Features.Customers.Commands.DeleteCustomer;
 
-public record DeleteCustomerCommand(int Id) : IRequest;
+public record DeleteCustomerCommand(int Id) : IRequest, IInvalidatesCache
+{
+    public IReadOnlyCollection<string> CachePrefixesToInvalidate => [CachePrefixes.LookupCustomers];
+}
 
 public class DeleteCustomerCommandHandler : IRequestHandler<DeleteCustomerCommand>
 {
@@ -28,7 +32,7 @@ public class DeleteCustomerCommandHandler : IRequestHandler<DeleteCustomerComman
         }
 
         customer.IsActive = false;
-        
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

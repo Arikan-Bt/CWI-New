@@ -1,12 +1,19 @@
 using CWI.Application.Interfaces.Repositories;
+using CWI.Application.Common.Caching;
 using CWI.Domain.Entities.Payments;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace CWI.Application.Features.Reports.Queries;
 
-public class GetPaymentMethodsLookupQuery : IRequest<List<object>>
+public class GetPaymentMethodsLookupQuery : IRequest<List<object>>, ICacheableQuery
 {
+    public string CacheKey => CachePrefixes.LookupPaymentMethods;
+    public TimeSpan SlidingExpiration => TimeSpan.FromMinutes(2);
+    public TimeSpan? AbsoluteExpirationRelativeToNow => TimeSpan.FromMinutes(5);
+    public bool BypassCache { get; init; }
+    public bool IsUserScoped => false;
+
     public class GetPaymentMethodsLookupQueryHandler : IRequestHandler<GetPaymentMethodsLookupQuery, List<object>>
     {
         private readonly IUnitOfWork _unitOfWork;

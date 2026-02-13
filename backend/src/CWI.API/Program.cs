@@ -1,4 +1,4 @@
-using CWI.Application;
+﻿using CWI.Application;
 using CWI.Infrastructure;
 using CWI.Infrastructure.Persistence;
 using CWI.API.Middlewares;
@@ -11,8 +11,6 @@ using OfficeOpenXml;
 #pragma warning disable CS0618
 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 #pragma warning restore CS0618
-
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,12 +25,22 @@ builder.WebHost.ConfigureKestrel(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache(options =>
+{
+    var cachingSection = builder.Configuration.GetSection("Caching");
+    var sizeLimitMb = cachingSection.GetValue<long?>("MemorySizeLimitMb") ?? 64;
+    var compactionPercentage = cachingSection.GetValue<double?>("CompactionPercentage") ?? 0.2;
+
+    options.SizeLimit = sizeLimitMb * 1024 * 1024;
+    options.CompactionPercentage = compactionPercentage;
+    options.ExpirationScanFrequency = TimeSpan.FromMinutes(1);
+});
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true;
 });
 
-// Swagger Konfigürasyonu (JWT desteği ile)
+// Swagger Konfigurasyonu (JWT destegi ile)
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -68,7 +76,7 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// JWT Kimlik Doğrulama Kaydı
+// JWT Kimlik Dogrulama Kaydi
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "CWI_Secret_Key_At_Least_32_Chars_Long";
 builder.Services.AddAuthentication(options =>
 {
@@ -90,11 +98,11 @@ builder.Services.AddAuthentication(options =>
 });
 builder.Services.AddAuthorization();
 
-// Application ve Infrastructure katmanlarını ekle
-builder.Services.AddApplication();
+// Application ve Infrastructure katmanlarini ekle
+builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// CORS ayarları
+// CORS ayarlari
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -107,7 +115,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Global Exception Middleware (Pipeline'ın en başında olmalı)
+// Global Exception Middleware (Pipeline'in en basinda olmali)
 app.UseMiddleware<ExceptionMiddleware>();
 app.UsePathBase("/api");
 
@@ -127,13 +135,13 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseCors("AllowAll");
 
-app.UseAuthentication(); // Auth her zaman Authorization'dan önce gelmeli
+app.UseAuthentication(); // Auth her zaman Authorization'dan once gelmeli
 app.UseAuthorization();
 
 app.MapControllers();
 app.MapFallbackToFile("index.html");
 
-// Veritabanı Seed İşlemi
+// Veritabani Seed Islemi
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -145,11 +153,11 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Veritabanı seed edilirken bir hata oluştu.");
+        logger.LogError(ex, "Veritabani seed edilirken bir hata olustu.");
     }
 }
 
-// API Sağlık Kontrolü (Health Check)
+// API Saglik Kontrolu (Health Check)
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy", time = DateTime.UtcNow }));
 
 app.Run();
