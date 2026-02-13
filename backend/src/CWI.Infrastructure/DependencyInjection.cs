@@ -1,6 +1,8 @@
 using CWI.Application.Interfaces.Repositories;
 using CWI.Infrastructure.Persistence;
 using CWI.Infrastructure.Repositories;
+using CWI.Infrastructure.Services;
+using CWI.Application.Interfaces.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,10 +49,14 @@ public static class DependencyInjection
         // Auth servisleri
         services.AddScoped<Application.Interfaces.Services.IAuthService, Auth.AuthService>();
         services.AddScoped<Application.Interfaces.Services.ICurrentUserService, Services.CurrentUserService>();
+        services.AddScoped<ISensitiveDataMasker, SensitiveDataMasker>();
+        services.AddScoped<IRequestContextReader, HttpRequestContextReader>();
+        services.AddScoped<IErrorLogWriter, ErrorLogWriter>();
         
         // Authorization
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        services.AddHostedService<ErrorLogRetentionBackgroundService>();
         
         return services;
     }

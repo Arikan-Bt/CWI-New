@@ -135,4 +135,13 @@ public static class Permissions
         public const string Edit = "Permissions.SalesPrices.Edit";
         public const string Delete = "Permissions.SalesPrices.Delete";
     }
+
+    /// <summary>
+    /// Sistem izleme yetkileri
+    /// </summary>
+    public static class System
+    {
+        public const string ErrorLogsView = "Permissions.System.ErrorLogs.View";
+        public const string ErrorLogsResolve = "Permissions.System.ErrorLogs.Resolve";
+    }
 }

@@ -1,4 +1,5 @@
 using FluentValidation;
+using CWI.Application.Common.Behaviors;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
@@ -23,6 +24,7 @@ public static class DependencyInjection
         services.AddMediatR(cfg => 
         {
             cfg.RegisterServicesFromAssembly(assembly);
+            cfg.AddOpenBehavior(typeof(UnhandledExceptionLoggingBehavior<,>));
         });
         
         // FluentValidation kaydı

@@ -1,11 +1,12 @@
 using System.Net;
-using CWI.Domain.Entities.System;
-using CWI.Application.Interfaces.Repositories;
+using CWI.Application.Common.Logging;
+using CWI.Application.Interfaces.Services;
+using FluentValidation;
 
 namespace CWI.API.Middlewares;
 
 /// <summary>
-/// TÃ¼m uygulamadaki hatalarÄ± yakalayan merkezi middleware
+/// Tüm uygulamadaki hatalarý yakalayan merkezi middleware
 /// </summary>
 public class ExceptionMiddleware
 {
@@ -22,13 +23,15 @@ public class ExceptionMiddleware
 
     public async Task InvokeAsync(HttpContext httpContext)
     {
+        httpContext.Request.EnableBuffering();
+
         try
         {
             await _next(httpContext);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Bir hata oluÅŸtu: {Message}", ex.Message);
+            _logger.LogError(ex, "Bir hata oluþtu: {Message}", ex.Message);
             await HandleExceptionAsync(httpContext, ex);
         }
     }
@@ -36,45 +39,117 @@ public class ExceptionMiddleware
     private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         context.Response.ContentType = "application/json";
-        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+        context.Response.StatusCode = MapStatusCode(exception);
 
-        // Ã–zel hata tiplerine gÃ¶re status code belirlenebilir (Ã¶rn. NotFoundException -> 404)
-        var message = "An unexpected error occurred on the server.";
-        
-        // HatayÄ± veritabanÄ±na logla
-        try
+        var responseMessage = context.Response.StatusCode == (int)HttpStatusCode.InternalServerError
+            ? "Beklenmeyen bir sunucu hatasý oluþtu."
+            : exception.Message;
+
+        if (!IsAlreadyLogged(context))
         {
-            using var scope = _serviceProvider.CreateScope();
-            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-            
-            var errorLog = new ErrorLog
+            try
             {
-                Message = exception.Message,
-                StackTrace = exception.StackTrace,
-                InnerException = exception.InnerException?.Message,
-                Source = exception.Source,
-                RequestUrl = context.Request.Path,
-                HttpMethod = context.Request.Method,
-                OccurredAt = DateTime.UtcNow,
-                IsResolved = false
-            };
-            
-            await unitOfWork.Repository<ErrorLog, long>().AddAsync(errorLog);
-            await unitOfWork.SaveChangesAsync();
-        }
-        catch (Exception logEx)
-        {
-            // Loglama sÄ±rasÄ±nda hata oluÅŸursa konsola yaz
-            _logger.LogCritical(logEx, "An error occurred while logging the error to the database!");
+                using var scope = _serviceProvider.CreateScope();
+                var contextReader = scope.ServiceProvider.GetRequiredService<IRequestContextReader>();
+                var errorLogWriter = scope.ServiceProvider.GetRequiredService<IErrorLogWriter>();
+                var environment = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
+
+                var requestSnapshot = await contextReader.ReadAsync(context.RequestAborted);
+
+                var model = new ErrorLogCreateModel
+                {
+                    Message = exception.Message,
+                    StackTrace = exception.StackTrace,
+                    InnerException = exception.InnerException?.Message,
+                    Source = exception.Source,
+                    TraceId = requestSnapshot.TraceId,
+                    UserId = requestSnapshot.UserId,
+                    UserName = requestSnapshot.UserName,
+                    IpAddress = requestSnapshot.IpAddress,
+                    RequestUrl = requestSnapshot.RequestUrl,
+                    HttpMethod = requestSnapshot.HttpMethod,
+                    RequestBody = requestSnapshot.RequestBodyMasked,
+                    ExceptionType = exception.GetType().FullName ?? exception.GetType().Name,
+                    Target = exception.TargetSite?.DeclaringType != null
+                        ? $"{exception.TargetSite.DeclaringType.FullName}.{exception.TargetSite.Name}"
+                        : exception.TargetSite?.Name,
+                    RequestQuery = requestSnapshot.RequestQuery,
+                    RequestRouteValues = requestSnapshot.RequestRouteValues,
+                    RequestHeaders = requestSnapshot.RequestHeaders,
+                    RequestContentType = requestSnapshot.RequestContentType,
+                    RequestContentLength = requestSnapshot.RequestContentLength,
+                    RequestBodyMasked = requestSnapshot.RequestBodyMasked,
+                    ErrorCode = MapErrorCode(exception),
+                    ParameterName = MapParameterName(exception),
+                    Environment = environment.EnvironmentName,
+                    MachineName = Environment.MachineName,
+                    OccurredAt = DateTime.UtcNow
+                };
+
+                await errorLogWriter.WriteAsync(model, context.RequestAborted);
+                MarkAsLogged(context);
+            }
+            catch (Exception logEx)
+            {
+                _logger.LogCritical(logEx, "Hata logu veritabanýna yazýlýrken hata oluþtu.");
+            }
         }
 
         var response = new ErrorDetails
         {
             StatusCode = context.Response.StatusCode,
-            Message = message,
-            DetailedMessage = exception.Message // Production ortamÄ±nda gizlenmelidir
+            Message = responseMessage,
+            DetailedMessage = exception.Message,
+            TraceId = context.TraceIdentifier
         };
 
         await context.Response.WriteAsync(response.ToString());
+    }
+
+    private static int MapStatusCode(Exception exception)
+    {
+        return exception switch
+        {
+            KeyNotFoundException => (int)HttpStatusCode.NotFound,
+            UnauthorizedAccessException => (int)HttpStatusCode.Unauthorized,
+            ValidationException => (int)HttpStatusCode.BadRequest,
+            InvalidOperationException => (int)HttpStatusCode.BadRequest,
+            ArgumentException => (int)HttpStatusCode.BadRequest,
+            _ => (int)HttpStatusCode.InternalServerError
+        };
+    }
+
+    private static string MapErrorCode(Exception exception)
+    {
+        return exception switch
+        {
+            InvalidOperationException => "INVALID_OPERATION",
+            KeyNotFoundException => "NOT_FOUND",
+            UnauthorizedAccessException => "UNAUTHORIZED",
+            ValidationException => "VALIDATION_ERROR",
+            ArgumentException => "INVALID_ARGUMENT",
+            _ => "UNHANDLED_EXCEPTION"
+        };
+    }
+
+    private static string? MapParameterName(Exception exception)
+    {
+        return exception switch
+        {
+            ArgumentException argumentException => argumentException.ParamName,
+            ValidationException validationException => validationException.Errors.FirstOrDefault()?.PropertyName,
+            _ => null
+        };
+    }
+
+    private static bool IsAlreadyLogged(HttpContext context)
+    {
+        return context.Items.TryGetValue(ErrorLogConstants.AlreadyLoggedHttpContextItemKey, out var alreadyLogged) &&
+               alreadyLogged is true;
+    }
+
+    private static void MarkAsLogged(HttpContext context)
+    {
+        context.Items[ErrorLogConstants.AlreadyLoggedHttpContextItemKey] = true;
     }
 }

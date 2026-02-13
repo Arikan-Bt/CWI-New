@@ -120,22 +120,15 @@ public class InventoryController : ControllerBase
     [ProducesResponseType(typeof(Result<int>), 200)]
     public async Task<IActionResult> CreateWarehouse([FromBody] CreateWarehouseDto dto)
     {
-        try
+        var command = new CreateWarehouseCommand
         {
-            var command = new CreateWarehouseCommand
-            {
-                Code = dto.Code,
-                Name = dto.Name,
-                Address = dto.Address,
-                IsDefault = dto.IsDefault
-            };
-            var result = await _mediator.Send(command);
-            return Ok(Result<int>.Succeed(result));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(Result<int>.Failure(ex.Message));
-        }
+            Code = dto.Code,
+            Name = dto.Name,
+            Address = dto.Address,
+            IsDefault = dto.IsDefault
+        };
+        var result = await _mediator.Send(command);
+        return Ok(Result<int>.Succeed(result));
     }
 
     /// <summary>
@@ -148,24 +141,17 @@ public class InventoryController : ControllerBase
     [ProducesResponseType(typeof(Result<bool>), 200)]
     public async Task<IActionResult> UpdateWarehouse(int id, [FromBody] UpdateWarehouseDto dto)
     {
-        try
+        var command = new UpdateWarehouseCommand
         {
-            var command = new UpdateWarehouseCommand
-            {
-                Id = id,
-                Code = dto.Code,
-                Name = dto.Name,
-                Address = dto.Address,
-                IsActive = dto.IsActive,
-                IsDefault = dto.IsDefault
-            };
-            var result = await _mediator.Send(command);
-            return Ok(Result<bool>.Succeed(result));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(Result<bool>.Failure(ex.Message));
-        }
+            Id = id,
+            Code = dto.Code,
+            Name = dto.Name,
+            Address = dto.Address,
+            IsActive = dto.IsActive,
+            IsDefault = dto.IsDefault
+        };
+        var result = await _mediator.Send(command);
+        return Ok(Result<bool>.Succeed(result));
     }
 
     /// <summary>
@@ -177,16 +163,9 @@ public class InventoryController : ControllerBase
     [ProducesResponseType(typeof(Result<bool>), 200)]
     public async Task<IActionResult> DeleteWarehouse(int id)
     {
-        try
-        {
-            var command = new DeleteWarehouseCommand { Id = id };
-            var result = await _mediator.Send(command);
-            return Ok(Result<bool>.Succeed(result));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(Result<bool>.Failure(ex.Message));
-        }
+        var command = new DeleteWarehouseCommand { Id = id };
+        var result = await _mediator.Send(command);
+        return Ok(Result<bool>.Succeed(result));
     }
 
     /// <summary>
